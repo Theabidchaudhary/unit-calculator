@@ -44,10 +44,15 @@ jobs:
       - name: Create GitHub Release with APK
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
+          TITLE="Latest Build ($(date -u '+%Y-%m-%d %H:%M') UTC)"
+          printf '**Branch:** `%s`\n**Commit:** `%s` — %s\n' \
+            "${{ github.ref_name }}" \
+            "${{ steps.sha.outputs.short }}" \
+            "$COMMIT_MSG" > /tmp/release-notes.md
           gh release create latest \
             app/build/outputs/apk/debug/app-debug.apk \
-            --title "Latest Build ($(date -u '+%Y-%m-%d %H:%M') UTC)" \
-            --notes "**Branch:** \`${{ github.ref_name }}\`
-          **Commit:** \`${{ steps.sha.outputs.short }}\` — ${{ github.event.head_commit.message }}" \
+            --title "$TITLE" \
+            --notes-file /tmp/release-notes.md \
             --latest
