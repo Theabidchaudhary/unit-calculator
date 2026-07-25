@@ -20,4 +20,5 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setAllowDecimals(allow: Boolean) = dataStore.setAllowDecimals(allow)
     override suspend fun setActiveMeterId(id: Long?) = dataStore.setActiveMeterId(id)
     override suspend fun setAccentColor(color: AccentColor) = dataStore.setAccentColor(color)
+    override suspend fun setMeterColor(meterId: Long, colorIndex: Int) = dataStore.setMeterColor(meterId, colorIndex)
 }

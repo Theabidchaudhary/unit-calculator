@@ -1,5 +1,6 @@
 package com.orwyx.unitcalculator.ui.navigation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +30,7 @@ fun HomeScaffold(
     onOpenMeter: (Long) -> Unit,
     onAddMeter: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenColorPicker: () -> Unit,
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(BottomTab.METERS) }
     val pagerState = rememberPagerState(initialPage = if (selectedTab == BottomTab.METERS) 0 else 1, pageCount = { 2 })
@@ -44,6 +46,11 @@ fun HomeScaffold(
         scope.launch { pagerState.animateScrollToPage(if (tab == BottomTab.METERS) 0 else 1) }
     }
 
+    // Back on planning tab → go to meters tab instead of exiting
+    BackHandler(enabled = pagerState.currentPage == 1) {
+        selectTab(BottomTab.METERS)
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { AppTopBar(title = if (selectedTab == BottomTab.METERS) "Unit Calculator" else "Planning", onSettings = onOpenSettings) },
@@ -52,7 +59,11 @@ fun HomeScaffold(
             HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), pageSpacing = 0.dp) { page ->
                 when (page) {
                     0 -> MetersScreen(onOpenMeter = onOpenMeter, onAddMeter = onAddMeter, contentPadding = padding)
-                    1 -> PlanningScreen(contentPadding = padding)
+                    1 -> PlanningScreen(
+                        contentPadding = padding,
+                        onOpenColorPicker = onOpenColorPicker,
+                        onNavigateBack = { selectTab(BottomTab.METERS) },
+                    )
                 }
             }
             GlassBottomNav(currentRoute = selectedTab.route, onTabSelected = ::selectTab, modifier = Modifier.align(Alignment.BottomCenter))

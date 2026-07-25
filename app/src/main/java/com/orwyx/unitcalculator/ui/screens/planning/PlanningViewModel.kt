@@ -35,6 +35,7 @@ data class PlanningUiState(
     val phaseSwitchDays: Set<Int> = emptySet(),
     val forecast: Forecast = Forecast(),
     val hasMeters: Boolean = false,
+    val meterColors: Map<Long, Int> = emptyMap(),
 ) {
     val summaryExpectedToday: Double get() = summaryTarget * (elapsedDays.toFloat() / totalDays).toDouble()
     val summaryDifference: Double get() = summaryConsumed - summaryExpectedToday
@@ -73,6 +74,7 @@ class PlanningViewModel @Inject constructor(
             phaseSwitchDays = switchDays,
             forecast = forecastEngine.forecast(totalConsumed, totalTarget, cycle),
             hasMeters = meters.isNotEmpty(),
+            meterColors = settings.meterColors,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlanningUiState())
 }

@@ -51,16 +51,16 @@ class MeterDetailViewModel @Inject constructor(
     ) { meter, allMeters, settings ->
         val cycle = BillingCycle.of(settings.readingDate)
         val phase = planningEngine.computePhases(allMeters, cycle).firstOrNull { it.meter.id == meterId }
-        val phaseDays = phase?.allocatedDays ?: cycle.totalDays
+        val remainingDays = phase?.remainingDaysInPhase ?: cycle.remainingDays
         val avgDaily = meter?.let { calculationEngine.averageDailyUsage(it, cycle) } ?: 0.0
-        val projected = avgDaily * phaseDays
+        val projectedRemaining = avgDaily * remainingDays
         MeterDetailUiState(
             meter = meter,
             settings = settings,
             avgDailyUsage = avgDaily,
-            projectedMonthEnd = projected,
-            projectedOverage = projected - (meter?.targetLimit ?: 0.0),
-            projectedPeriodDays = phaseDays,
+            projectedMonthEnd = projectedRemaining,
+            projectedOverage = projectedRemaining - (meter?.remainingUnits ?: 0.0),
+            projectedPeriodDays = remainingDays,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MeterDetailUiState())
 

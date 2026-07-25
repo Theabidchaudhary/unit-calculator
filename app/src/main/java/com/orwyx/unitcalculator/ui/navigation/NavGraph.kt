@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.orwyx.unitcalculator.ui.screens.metercolors.MeterColorPickerScreen
 import com.orwyx.unitcalculator.ui.screens.meters.MeterDetailScreen
 import com.orwyx.unitcalculator.ui.screens.meters.MeterEditScreen
 import com.orwyx.unitcalculator.ui.screens.settings.SettingsScreen
@@ -31,6 +32,7 @@ fun UnitCalculatorNavGraph(navController: NavHostController = rememberNavControl
                 onOpenMeter = { id -> navController.navigate(Routes.meterDetail(id)) },
                 onAddMeter = { navController.navigate(Routes.meterEdit()) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                onOpenColorPicker = { navController.navigate(Routes.METER_COLORS) },
             )
         }
         composable(route = Routes.METER_DETAIL, arguments = listOf(navArgument(Routes.ARG_METER_ID) { type = NavType.StringType })) {
@@ -41,6 +43,9 @@ fun UnitCalculatorNavGraph(navController: NavHostController = rememberNavControl
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.METER_COLORS) {
+            MeterColorPickerScreen(onBack = { navController.popBackStack() })
         }
     }
 }

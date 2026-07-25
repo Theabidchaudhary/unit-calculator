@@ -27,6 +27,7 @@ class SettingsDataStore(private val context: Context) {
         val ALLOW_DECIMALS = booleanPreferencesKey("allow_decimals")
         val ACTIVE_METER_ID = longPreferencesKey("active_meter_id")
         val ACCENT_COLOR = stringPreferencesKey("accent_color")
+        val METER_COLORS = stringPreferencesKey("meter_colors")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -37,6 +38,7 @@ class SettingsDataStore(private val context: Context) {
             allowDecimals = prefs[Keys.ALLOW_DECIMALS] ?: false,
             activeMeterId = prefs[Keys.ACTIVE_METER_ID]?.takeIf { it > 0L },
             accentColor = prefs[Keys.ACCENT_COLOR]?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() } ?: AccentColor.BLUE,
+            meterColors = decodeMeterColors(prefs[Keys.METER_COLORS] ?: ""),
         )
     }
 
@@ -46,4 +48,21 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setAllowDecimals(allow: Boolean) = context.dataStore.edit { it[Keys.ALLOW_DECIMALS] = allow }.let {}
     suspend fun setActiveMeterId(id: Long?) = context.dataStore.edit { it[Keys.ACTIVE_METER_ID] = (id ?: 0L) }.let {}
     suspend fun setAccentColor(color: AccentColor) = context.dataStore.edit { it[Keys.ACCENT_COLOR] = color.name }.let {}
+
+    suspend fun setMeterColor(meterId: Long, colorIndex: Int) = context.dataStore.edit { prefs ->
+        val current = decodeMeterColors(prefs[Keys.METER_COLORS] ?: "").toMutableMap()
+        current[meterId] = colorIndex
+        prefs[Keys.METER_COLORS] = encodeMeterColors(current)
+    }.let {}
+
+    private fun encodeMeterColors(map: Map<Long, Int>): String =
+        map.entries.joinToString(";") { "${it.key}=${it.value}" }
+
+    private fun decodeMeterColors(s: String): Map<Long, Int> =
+        if (s.isBlank()) emptyMap()
+        else s.split(";").mapNotNull { entry ->
+            val parts = entry.split("=")
+            if (parts.size == 2) parts[0].toLongOrNull()?.let { id -> parts[1].toIntOrNull()?.let { idx -> id to idx } }
+            else null
+        }.toMap()
 }

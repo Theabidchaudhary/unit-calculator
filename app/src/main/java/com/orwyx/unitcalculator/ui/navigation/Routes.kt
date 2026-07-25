@@ -13,6 +13,7 @@ object Routes {
     const val SEARCH = "search"
     const val HISTORY = "history"
 
+    const val METER_COLORS = "meter_colors"
     const val METER_DETAIL = "meter_detail/{meterId}"
     const val METER_EDIT = "meter_edit?meterId={meterId}"
 

@@ -1,6 +1,8 @@
 package com.orwyx.unitcalculator.ui.screens.planning
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,14 +59,20 @@ import kotlin.math.max
 @Composable
 fun PlanningScreen(
     contentPadding: PaddingValues,
+    onOpenColorPicker: () -> Unit,
+    onNavigateBack: () -> Unit,
     viewModel: PlanningViewModel = hiltViewModel(),
 ) {
+    BackHandler { onNavigateBack() }
+
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val fmt = DateTimeFormatter.ofPattern("d MMM")
     var selectedDay by remember { mutableStateOf<DayPlan?>(null) }
-    val meterColorMap = remember(state.meterWindows) {
+    val meterColorMap = remember(state.meterWindows, state.meterColors) {
         state.meterWindows.mapIndexed { index, window ->
-            window.meter.id to MeterPalette.colorFor(index)
+            val userColorIdx = state.meterColors[window.meter.id]
+            window.meter.id to if (userColorIdx != null) MeterPalette.colorForIndex(userColorIdx)
+            else MeterPalette.colorFor(index)
         }.toMap()
     }
 
@@ -112,7 +120,7 @@ fun PlanningScreen(
                         PlanStat("Expected", Formatters.units(state.summaryExpectedToday))
                         PlanStat("Actual", Formatters.units(state.summaryConsumed))
                         PlanStat(
-                            if (state.summaryOnTrack) "Under by" else "Over by",
+                            if (state.summaryOnTrack) "Under" else "Over",
                             Formatters.units(abs(state.summaryDifference)),
                             color = if (state.summaryOnTrack) StatusDeepGreen else StatusRed,
                         )
@@ -121,7 +129,29 @@ fun PlanningScreen(
             }
         }
 
-        item { SectionHeader("Calendar") }
+        // Calendar header with meter color dots
+        item {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Calendar", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    modifier = Modifier
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable { onOpenColorPicker() }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                ) {
+                    state.meterWindows.take(6).forEach { window ->
+                        val color = meterColorMap[window.meter.id] ?: MaterialTheme.colorScheme.primary
+                        Box(Modifier.size(11.dp).clip(CircleShape).background(color))
+                    }
+                }
+            }
+        }
         item {
             NeumorphicCard(modifier = Modifier.fillMaxWidth()) {
                 Column {
@@ -251,9 +281,6 @@ private fun MeterPhaseCard(
                     MiniStat("Used", Formatters.units(phase.meter.consumedUnits))
                     MiniStat("Left", Formatters.units(phase.meter.remainingUnits))
                     MiniStat("Target", Formatters.units(phase.meter.targetLimit))
-                    if (phase.isActive && phase.daysUntilExhaustion < Double.MAX_VALUE) {
-                        MiniStat("~days left", "%.1f".format(phase.daysUntilExhaustion), accent)
-                    }
                 }
             }
         }
@@ -291,36 +318,42 @@ private fun DayDetail(
                     .fillMaxWidth()
                     .clip(MaterialTheme.shapes.small)
                     .background(meterColor.copy(alpha = 0.12f))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Spacer(Modifier.size(10.dp).clip(CircleShape).background(meterColor))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Meter ·•••${day.meterRefLast4}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = meterColor)
-                    }
-                    Text(window.meter.name, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // Left: bullet + meter name big
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(10.dp).clip(CircleShape).background(meterColor))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        window.meter.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = meterColor,
+                    )
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Expected: ${Formatters.units(day.expectedMeterReading)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
-                    Text("Actual: ${Formatters.units(actualReading)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // Right: 4 progressively larger dots + last 4 ref digits
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    listOf(4.dp, 6.dp, 8.dp, 10.dp).forEach { dotSize ->
+                        Box(Modifier.size(dotSize).clip(CircleShape).background(meterColor))
+                    }
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        day.meterRefLast4,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = meterColor,
+                    )
                 }
             }
             Spacer(Modifier.height(10.dp))
         }
 
         if (window != null) {
-            val diff = actualReading - day.expectedMeterReading
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
                 PlanStat("Expected reading", Formatters.units(day.expectedMeterReading))
                 PlanStat("Current reading", Formatters.units(actualReading))
-                PlanStat(
-                    if (diff <= 0) "Under by" else "Over by",
-                    Formatters.units(abs(diff)),
-                    color = if (diff <= 0) StatusDeepGreen else StatusRed,
-                )
             }
         }
     }

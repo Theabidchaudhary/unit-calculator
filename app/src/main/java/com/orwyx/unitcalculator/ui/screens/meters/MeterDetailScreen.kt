@@ -37,11 +37,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.orwyx.unitcalculator.core.util.Formatters
+import androidx.compose.ui.graphics.Color
 import com.orwyx.unitcalculator.ui.components.AnimatedProgressBar
 import com.orwyx.unitcalculator.ui.components.ConfirmDialog
 import com.orwyx.unitcalculator.ui.components.NeumorphicCard
 import com.orwyx.unitcalculator.ui.components.SectionHeader
 import com.orwyx.unitcalculator.ui.components.StatusBadge
+import com.orwyx.unitcalculator.ui.theme.StatusDeepGreen
+import com.orwyx.unitcalculator.ui.theme.StatusRed
 import com.orwyx.unitcalculator.ui.theme.pressScale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,10 +118,11 @@ fun MeterDetailScreen(
                 NeumorphicCard(modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         DetailStat("Avg / day", Formatters.units(state.avgDailyUsage))
-                        DetailStat("Projected (${state.projectedPeriodDays}d)", Formatters.units(state.projectedMonthEnd))
+                        DetailStat("Estimate (${state.projectedPeriodDays}d)", Formatters.units(state.projectedMonthEnd))
                         DetailStat(
-                            if (state.projectedOverage > 0) "Over by" else "Under by",
+                            if (state.projectedOverage > 0) "Over" else "Under",
                             Formatters.units(kotlin.math.abs(state.projectedOverage)),
+                            valueColor = if (state.projectedOverage > 0) StatusRed else StatusDeepGreen,
                         )
                     }
                 }
@@ -163,9 +167,13 @@ fun MeterDetailScreen(
 }
 
 @Composable
-private fun DetailStat(label: String, value: String) {
+private fun DetailStat(
+    label: String,
+    value: String,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = valueColor)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

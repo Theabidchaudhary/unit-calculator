@@ -14,4 +14,5 @@ interface SettingsRepository {
     suspend fun setAllowDecimals(allow: Boolean)
     suspend fun setActiveMeterId(id: Long?)
     suspend fun setAccentColor(color: AccentColor)
+    suspend fun setMeterColor(meterId: Long, colorIndex: Int)
 }
