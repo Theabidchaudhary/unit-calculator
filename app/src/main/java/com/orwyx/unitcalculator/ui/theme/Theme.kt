@@ -1,12 +1,16 @@
 package com.orwyx.unitcalculator.ui.theme
 
+import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 
 private val LightColors = lightColorScheme(
@@ -63,6 +67,16 @@ fun UnitCalculatorTheme(
     val colors = if (dark) DarkColors else LightColors
     val neu = if (dark) NeuColors(NeuDarkShadow, NeuDarkHighlight, true)
     else NeuColors(NeuLightShadow, NeuLightHighlight, false)
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = !dark
+            controller.isAppearanceLightNavigationBars = !dark
+        }
+    }
 
     CompositionLocalProvider(LocalNeuColors provides neu) {
         MaterialTheme(
