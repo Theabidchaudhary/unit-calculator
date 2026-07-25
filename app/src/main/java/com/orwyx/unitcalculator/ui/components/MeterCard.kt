@@ -109,8 +109,6 @@ fun MeterCard(
                     Column(Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(meter.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                            if (isActive) { Spacer(Modifier.size(8.dp)); ActivePill() }
-                            if (isClosed) { Spacer(Modifier.size(8.dp)); ClosedPill() }
                         }
                         Text(
                             "Meter $sequenceNumber",
@@ -176,7 +174,7 @@ fun MeterCard(
 private fun PowerButton(isActive: Boolean, isClosed: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val (tint, bg) = when {
-        isClosed -> StatusRed.copy(alpha = 0.9f) to StatusRed.copy(alpha = 0.18f)
+        isClosed -> MaterialTheme.colorScheme.onPrimary to StatusRed
         isActive -> MaterialTheme.colorScheme.onPrimary to StatusDeepGreen
         else -> MaterialTheme.colorScheme.onSurfaceVariant to MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     }
@@ -186,7 +184,7 @@ private fun PowerButton(isActive: Boolean, isClosed: Boolean, onClick: () -> Uni
             .pressScale(interaction, pressedScale = 0.88f)
             .clip(MaterialTheme.shapes.small)
             .background(bg)
-            .clickable(interactionSource = interaction, indication = null, enabled = !isClosed, onClick = onClick),
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

@@ -1,0 +1,53 @@
+name: Build & Release APK
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --no-configuration-cache --stacktrace
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Delete existing latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+
+      - name: Create GitHub Release with APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create latest \
+            app/build/outputs/apk/debug/app-debug.apk \
+            --title "Latest Build ($(date -u '+%Y-%m-%d %H:%M') UTC)" \
+            --notes "**Branch:** \`${{ github.ref_name }}\`
+          **Commit:** \`${{ steps.sha.outputs.short }}\` — ${{ github.event.head_commit.message }}" \
+            --latest
