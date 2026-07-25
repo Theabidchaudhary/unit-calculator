@@ -7,7 +7,9 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,13 +19,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
@@ -133,7 +135,7 @@ fun MeterCard(
                 AnimatedProgressBar(fraction = meter.usedFraction)
 
                 Spacer(Modifier.height(12.dp))
-                SafeBudgetChip(meter = meter, phase = phase, remainingDays = remainingDays)
+                SafeBudgetChip(meter = meter, phase = phase, remainingDays = remainingDays, isActive = isActive, isClosed = isClosed)
 
                 Spacer(Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -214,6 +216,7 @@ private fun ClosedPill() {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClick: () -> Unit, onClear: () -> Unit) {
     val fmt = remember { DateTimeFormatter.ofPattern("d MMM") }
@@ -221,40 +224,31 @@ private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClic
     val hasDate = closedDate != null
     val bg = if (hasDate) StatusRed else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
     val contentColor = if (hasDate) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-    Box {
-        Box(
-            modifier = Modifier
-                .height(58.dp)
-                .clip(MaterialTheme.shapes.medium)
-                .background(bg)
-                .pressScale(interaction, pressedScale = 0.88f)
-                .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
-                .padding(horizontal = 14.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (hasDate) {
-                Text(
-                    text = closedDate!!.format(fmt),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = contentColor,
-                    fontWeight = FontWeight.Bold,
-                )
-            } else {
-                Icon(Icons.Rounded.CalendarMonth, contentDescription = "Set closed date", tint = contentColor, modifier = Modifier.size(22.dp))
-            }
-        }
+    Box(
+        modifier = Modifier
+            .width(88.dp)
+            .height(58.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .background(bg)
+            .pressScale(interaction, pressedScale = 0.88f)
+            .combinedClickable(
+                interactionSource = interaction,
+                indication = null,
+                enabled = enabled,
+                onClick = onClick,
+                onDoubleClick = { if (hasDate) onClear() },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
         if (hasDate) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(18.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
-                    .clickable(onClick = onClear),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Rounded.Close, contentDescription = "Clear date", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(10.dp))
-            }
+            Text(
+                text = closedDate!!.format(fmt),
+                style = MaterialTheme.typography.titleMedium,
+                color = contentColor,
+                fontWeight = FontWeight.Bold,
+            )
+        } else {
+            Icon(Icons.Rounded.CalendarMonth, contentDescription = "Set closed date", tint = contentColor, modifier = Modifier.size(22.dp))
         }
     }
 }
@@ -312,18 +306,19 @@ private fun CurrentReadingRow(
         CloseDateIconButton(closedDate = meter.closedDate, enabled = !isClosed, onClick = onCalendarClick, onClear = onClearClosedDate)
         OutlinedTextField(
             value = fieldValue, onValueChange = { fieldValue = it },
-            label = { Text("Current reading") }, singleLine = true,
+            label = { Text("Current reading", modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
+            singleLine = true,
             enabled = !isClosed, shape = MaterialTheme.shapes.medium,
-            textStyle = MaterialTheme.typography.bodyMedium,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
             modifier = Modifier.weight(1f).heightIn(min = 58.dp).focusRequester(focusRequester),
         )
         Button(
             onClick = { submit() }, interactionSource = buttonInteraction, enabled = !isClosed,
-            modifier = Modifier.height(58.dp).pressScale(buttonInteraction),
+            modifier = Modifier.width(88.dp).height(58.dp).pressScale(buttonInteraction),
             shape = MaterialTheme.shapes.medium,
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp),
         ) { Text("Calculate", style = MaterialTheme.typography.labelMedium) }
     }
 }
@@ -334,19 +329,21 @@ private fun formatReading(value: Double, allowDecimals: Boolean): String {
 }
 
 @Composable
-private fun SafeBudgetChip(meter: Meter, phase: MeterPhase?, remainingDays: Int) {
+private fun SafeBudgetChip(meter: Meter, phase: MeterPhase?, remainingDays: Int, isActive: Boolean, isClosed: Boolean) {
     val remaining = meter.remainingUnits
     val color = ConsumptionColors.colorFor(meter.usedFraction)
     val text = when {
+        isClosed -> "${Formatters.units(remaining)} units left"
+        !isActive && phase?.isPending == true -> "Waiting for Meter ${phase.sequenceIndex + 1}"
+        !isActive -> "Waiting for previous meter"
         remaining <= 0.0 -> "Over by ${Formatters.units(-remaining)} units"
         phase == null -> {
-            if (remainingDays > 0) "Max ${Formatters.units(remaining / remainingDays)}/day · $remainingDays days left"
+            if (remainingDays > 0) "~${Formatters.units(remaining / remainingDays)}/day · $remainingDays days left"
             else "${Formatters.units(remaining)} units left"
         }
         phase.isComplete -> "${Formatters.units(remaining)} units left"
-        phase.isPending -> "Waiting for Meter ${phase.sequenceIndex + 1}"
         phase.remainingDaysInPhase > 0 ->
-            "Max ${Formatters.units(remaining / phase.remainingDaysInPhase)}/day · ${phase.remainingDaysInPhase} days left"
+            "~${Formatters.units(remaining / phase.remainingDaysInPhase)}/day · ${phase.remainingDaysInPhase} days left"
         else -> "${Formatters.units(remaining)} units left"
     }
     Text(

@@ -1,5 +1,6 @@
 package com.orwyx.unitcalculator.ui.screens.meters
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -33,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -91,14 +93,28 @@ fun MetersScreen(
 
             item {
                 SectionHeader(
-                    title = "Total Meters",
+                    title = "Meters",
                     trailing = {
-                        Text(
-                            text = state.summary.totalMeters.toString(),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier
+                                .clip(MaterialTheme.shapes.small)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                text = state.summary.totalMeters.toString(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                text = if (state.summary.totalMeters == 1) "meter" else "meters",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                            )
+                        }
                     },
                 )
             }
@@ -222,7 +238,7 @@ private fun DashboardRow(state: MetersUiState, onResetAll: () -> Unit) {
             Spacer(Modifier.height(10.dp))
         }
         Button(onClick = onResetAll, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
-            Text("Reset cycle", style = MaterialTheme.typography.labelLarge)
+            Text("Reset Month", style = MaterialTheme.typography.labelLarge)
         }
     }
 }

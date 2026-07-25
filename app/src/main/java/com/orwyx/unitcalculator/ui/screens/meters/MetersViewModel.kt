@@ -58,8 +58,14 @@ class MetersViewModel @Inject constructor(
             ) { meters, settings -> meters to settings }.collect { (meters, settings) ->
                 if (meters.isNotEmpty()) {
                     val activeId = settings.activeMeterId
-                    if (activeId == null || meters.none { it.id == activeId }) {
-                        settingsRepository.setActiveMeterId(meters.first().id)
+                    val activeMeter = meters.firstOrNull { it.id == activeId }
+                    val needsReassign = activeId == null
+                        || activeMeter == null
+                        || activeMeter.closedDate != null
+                    if (needsReassign) {
+                        val nextOpen = meters.firstOrNull { it.closedDate == null }
+                            ?: meters.first()
+                        settingsRepository.setActiveMeterId(nextOpen.id)
                     }
                 }
             }
