@@ -1,7 +1,7 @@
 package com.orwyx.unitcalculator.ui.screens.meters
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.animateColorAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -206,7 +206,7 @@ fun MetersScreen(
         )
         val fabInteraction = remember { MutableInteractionSource() }
         FloatingActionButton(
-            onClick = if (state.reorderMode) viewModel::savePendingOrder else onAddMeter,
+            onClick = { if (state.reorderMode) viewModel.savePendingOrder() else onAddMeter() },
             interactionSource = fabInteraction,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
