@@ -140,7 +140,7 @@ fun MetersScreen(
                                     while (true) {
                                         awaitPointerEventScope { awaitFirstDown(requireUnconsumed = false) }
                                         val job = launch {
-                                            delay(1_500L)
+                                            delay(1_000L)
                                             viewModel.enterReorderMode()
                                         }
                                         try {
@@ -157,16 +157,14 @@ fun MetersScreen(
                                         onDrag = { change, dragAmount ->
                                             change.consume()
                                             accumulated += dragAmount.y
-                                            val threshold = (itemHeights[meter.id] ?: 300) * 0.5f
-                                            when {
-                                                accumulated > threshold -> {
-                                                    viewModel.moveDown(meter.id)
-                                                    accumulated = 0f
-                                                }
-                                                accumulated < -threshold -> {
-                                                    viewModel.moveUp(meter.id)
-                                                    accumulated = 0f
-                                                }
+                                            val threshold = (itemHeights[meter.id] ?: 200) * 0.45f
+                                            while (accumulated > threshold) {
+                                                viewModel.moveDown(meter.id)
+                                                accumulated -= threshold
+                                            }
+                                            while (accumulated < -threshold) {
+                                                viewModel.moveUp(meter.id)
+                                                accumulated += threshold
                                             }
                                         }
                                     )
@@ -189,9 +187,13 @@ fun MetersScreen(
                 onClick = viewModel::savePendingOrder,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = contentPadding.calculateBottomPadding() + 114.dp),
+                    .padding(bottom = contentPadding.calculateBottomPadding() + 114.dp)
+                    .padding(horizontal = 24.dp)
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = MaterialTheme.shapes.extraLarge,
             ) {
-                Text("Save Order")
+                Text("Save Order", style = MaterialTheme.typography.labelLarge)
             }
         }
     }

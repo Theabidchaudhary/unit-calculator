@@ -94,8 +94,8 @@ fun MeterDetailScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column {
-                                Text(meter.provider.fullName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("Ref: ${meter.referenceNumber}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                                Text("Ref", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(meter.referenceNumber, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                             }
                             StatusBadge(meter.status)
                         }

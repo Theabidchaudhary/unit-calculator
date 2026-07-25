@@ -1,11 +1,15 @@
 package com.orwyx.unitcalculator.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -125,37 +129,61 @@ fun MeterCard(
                     )
                 }
 
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = Formatters.maskedReference(meter.referenceNumber),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                Spacer(Modifier.height(16.dp))
-                AnimatedProgressBar(fraction = meter.usedFraction)
-
-                Spacer(Modifier.height(12.dp))
-                SafeBudgetChip(meter = meter, phase = phase, remainingDays = remainingDays, isActive = isActive, isClosed = isClosed)
-
-                Spacer(Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Stat("Consumed", Formatters.units(meter.consumedUnits))
-                    Stat("Remaining", Formatters.units(meter.remainingUnits))
-                    Stat("Used", Formatters.percent(meter.usedFraction), valueColor = ConsumptionColors.colorFor(meter.usedFraction))
-                    Stat("Target", Formatters.units(meter.targetLimit))
+                // Compact reorder row: ref number prominent
+                AnimatedVisibility(
+                    visible = reorderMode,
+                    enter = expandVertically(animationSpec = tween(280, easing = EaseInOut)),
+                    exit = shrinkVertically(animationSpec = tween(280, easing = EaseInOut)),
+                ) {
+                    Text(
+                        text = Formatters.maskedReference(meter.referenceNumber),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
                 }
 
-                Spacer(Modifier.height(14.dp))
-                CurrentReadingRow(
-                    meter = meter,
-                    allowDecimals = allowDecimals,
-                    isClosed = isClosed,
-                    isReorderMode = reorderMode,
-                    onSubmit = onCurrentReadingSubmit,
-                    onCalendarClick = { if (!reorderMode) showCloseDatePicker = true },
-                    onClearClosedDate = { if (!reorderMode) onSetClosedDate(null) },
-                )
+                // Full card content
+                AnimatedVisibility(
+                    visible = !reorderMode,
+                    enter = expandVertically(animationSpec = tween(280, easing = EaseInOut)),
+                    exit = shrinkVertically(animationSpec = tween(280, easing = EaseInOut)),
+                ) {
+                    Column {
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = Formatters.maskedReference(meter.referenceNumber),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+
+                        Spacer(Modifier.height(16.dp))
+                        AnimatedProgressBar(fraction = meter.usedFraction)
+
+                        Spacer(Modifier.height(12.dp))
+                        SafeBudgetChip(meter = meter, phase = phase, remainingDays = remainingDays, isActive = isActive, isClosed = isClosed)
+
+                        Spacer(Modifier.height(12.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Stat("Consumed", Formatters.units(meter.consumedUnits))
+                            Stat("Remaining", Formatters.units(meter.remainingUnits))
+                            Stat("Used", Formatters.percent(meter.usedFraction), valueColor = ConsumptionColors.colorFor(meter.usedFraction))
+                            Stat("Target", Formatters.units(meter.targetLimit))
+                        }
+
+                        Spacer(Modifier.height(14.dp))
+                        CurrentReadingRow(
+                            meter = meter,
+                            allowDecimals = allowDecimals,
+                            isClosed = isClosed,
+                            isReorderMode = reorderMode,
+                            onSubmit = onCurrentReadingSubmit,
+                            onCalendarClick = { showCloseDatePicker = true },
+                            onClearClosedDate = { onSetClosedDate(null) },
+                        )
+                    }
+                }
             }
         }
     }
@@ -229,7 +257,7 @@ private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClic
     Box(
         modifier = Modifier
             .width(72.dp)
-            .height(58.dp)
+            .height(52.dp)
             .clip(MaterialTheme.shapes.medium)
             .background(bg)
             .pressScale(interaction, pressedScale = 0.88f)
@@ -329,11 +357,11 @@ private fun CurrentReadingRow(
             textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
-            modifier = Modifier.weight(1f).heightIn(min = 58.dp).focusRequester(focusRequester),
+            modifier = Modifier.weight(1f).heightIn(min = 52.dp).focusRequester(focusRequester),
         )
         Button(
             onClick = { submit() }, interactionSource = buttonInteraction, enabled = !fieldDisabled,
-            modifier = Modifier.width(72.dp).height(58.dp).pressScale(buttonInteraction),
+            modifier = Modifier.width(72.dp).height(52.dp).pressScale(buttonInteraction),
             shape = MaterialTheme.shapes.medium,
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp),
         ) { Text("Calculate", style = MaterialTheme.typography.labelMedium) }
@@ -357,12 +385,12 @@ private fun SafeBudgetChip(meter: Meter, phase: MeterPhase?, remainingDays: Int,
             "${Formatters.units(remaining)} units left"
         remaining <= 0.0 -> "Over by ${Formatters.units(-remaining)} units"
         phase == null -> {
-            if (remainingDays > 0) "${Formatters.units(remaining / remainingDays)} units/day safe limit · $remainingDays days left"
+            if (remainingDays > 0) "Stay under ${Formatters.units(remaining / remainingDays)} units/day - $remainingDays days left"
             else "${Formatters.units(remaining)} units left"
         }
         phase.isComplete -> "${Formatters.units(remaining)} units left"
         phase.remainingDaysInPhase > 0 ->
-            "${Formatters.units(remaining / phase.remainingDaysInPhase)} units/day safe limit · ${phase.remainingDaysInPhase} days left"
+            "Stay under ${Formatters.units(remaining / phase.remainingDaysInPhase)} units/day - ${phase.remainingDaysInPhase} days left"
         else -> "${Formatters.units(remaining)} units left"
     }
     Text(

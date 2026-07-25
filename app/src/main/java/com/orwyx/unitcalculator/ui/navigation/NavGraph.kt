@@ -12,7 +12,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.orwyx.unitcalculator.ui.screens.history.HistoryScreen
 import com.orwyx.unitcalculator.ui.screens.meters.MeterDetailScreen
 import com.orwyx.unitcalculator.ui.screens.meters.MeterEditScreen
 import com.orwyx.unitcalculator.ui.screens.settings.SettingsScreen
@@ -41,8 +40,7 @@ fun UnitCalculatorNavGraph(navController: NavHostController = rememberNavControl
             MeterEditScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.SETTINGS) {
-            SettingsScreen(onBack = { navController.popBackStack() }, onOpenHistory = { navController.navigate(Routes.HISTORY) })
+            SettingsScreen(onBack = { navController.popBackStack() })
         }
-        composable(Routes.HISTORY) { HistoryScreen(onBack = { navController.popBackStack() }) }
     }
 }
