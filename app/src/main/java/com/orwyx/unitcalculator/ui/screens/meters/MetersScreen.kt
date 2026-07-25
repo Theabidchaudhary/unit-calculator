@@ -1,9 +1,18 @@
 package com.orwyx.unitcalculator.ui.screens.meters
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,16 +23,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.BatteryChargingFull
-import androidx.compose.material.icons.rounded.ElectricMeter
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.ElectricMeter
 import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.Savings
-import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +65,7 @@ import com.orwyx.unitcalculator.ui.components.SummaryCard
 import com.orwyx.unitcalculator.ui.theme.StatusDeepGreen
 import com.orwyx.unitcalculator.ui.theme.StatusOrange
 import com.orwyx.unitcalculator.ui.theme.StatusRed
+import com.orwyx.unitcalculator.ui.theme.pressScale
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -58,6 +73,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MetersScreen(
     onOpenMeter: (Long) -> Unit,
+    onAddMeter: () -> Unit,
     contentPadding: PaddingValues,
     viewModel: MetersViewModel = hiltViewModel(),
 ) {
@@ -182,18 +198,37 @@ fun MetersScreen(
             }
         }
 
-        if (state.reorderMode) {
-            Button(
-                onClick = viewModel::savePendingOrder,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = contentPadding.calculateBottomPadding() + 114.dp)
-                    .padding(horizontal = 24.dp)
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = MaterialTheme.shapes.extraLarge,
-            ) {
-                Text("Save Order", style = MaterialTheme.typography.labelLarge)
+        val fabColor by animateColorAsState(
+            targetValue = if (state.reorderMode) StatusDeepGreen else MaterialTheme.colorScheme.primary,
+            animationSpec = tween(320),
+            label = "fabColor",
+        )
+        val fabInteraction = remember { MutableInteractionSource() }
+        FloatingActionButton(
+            onClick = if (state.reorderMode) viewModel::savePendingOrder else onAddMeter,
+            interactionSource = fabInteraction,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .navigationBarsPadding()
+                .padding(end = 28.dp, bottom = 96.dp)
+                .pressScale(fabInteraction, pressedScale = 0.90f),
+            shape = MaterialTheme.shapes.large,
+            containerColor = fabColor,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ) {
+            AnimatedContent(
+                targetState = state.reorderMode,
+                transitionSpec = {
+                    (scaleIn(tween(220)) + fadeIn(tween(220))) togetherWith
+                        (scaleOut(tween(180)) + fadeOut(tween(180)))
+                },
+                label = "fabIcon",
+            ) { inReorder ->
+                if (inReorder) {
+                    Icon(Icons.Rounded.Check, contentDescription = "Save order", modifier = Modifier.size(28.dp))
+                } else {
+                    Icon(Icons.Rounded.Add, contentDescription = "Add meter", modifier = Modifier.size(28.dp))
+                }
             }
         }
     }

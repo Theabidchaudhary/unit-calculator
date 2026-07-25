@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Delete
@@ -38,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.orwyx.unitcalculator.core.util.Formatters
-import com.orwyx.unitcalculator.domain.model.ReadingHistory
 import com.orwyx.unitcalculator.ui.components.AnimatedProgressBar
 import com.orwyx.unitcalculator.ui.components.ConfirmDialog
 import com.orwyx.unitcalculator.ui.components.NeumorphicCard
@@ -141,18 +139,6 @@ fun MeterDetailScreen(
                 }
             }
 
-            item { SectionHeader("History") }
-            if (state.history.isEmpty()) {
-                item {
-                    Text(
-                        "No completed months yet. Reset a month to start building history.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            } else {
-                items(state.history, key = { it.id }) { record -> HistoryRow(record) }
-            }
         }
     }
 
@@ -184,21 +170,3 @@ private fun DetailStat(label: String, value: String) {
     }
 }
 
-@Composable
-private fun HistoryRow(record: ReadingHistory) {
-    NeumorphicCard(modifier = Modifier.fillMaxWidth(), contentPadding = 16.dp) {
-        Column {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(record.monthLabel, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
-                StatusBadge(record.status)
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                DetailStat("Consumed", Formatters.units(record.unitsConsumed))
-                DetailStat("Target", Formatters.units(record.target))
-                DetailStat("Remaining", Formatters.units(record.remaining))
-                DetailStat("Avg/day", Formatters.units(record.avgDailyUsage))
-            }
-        }
-    }
-}

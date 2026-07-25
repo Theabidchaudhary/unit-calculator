@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.orwyx.unitcalculator.domain.model.AccentColor
 import com.orwyx.unitcalculator.domain.model.AppSettings
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +26,7 @@ class SettingsDataStore(private val context: Context) {
         val DEFAULT_TARGET = doublePreferencesKey("default_target")
         val ALLOW_DECIMALS = booleanPreferencesKey("allow_decimals")
         val ACTIVE_METER_ID = longPreferencesKey("active_meter_id")
+        val ACCENT_COLOR = stringPreferencesKey("accent_color")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -34,6 +36,7 @@ class SettingsDataStore(private val context: Context) {
             defaultTarget = prefs[Keys.DEFAULT_TARGET] ?: 200.0,
             allowDecimals = prefs[Keys.ALLOW_DECIMALS] ?: false,
             activeMeterId = prefs[Keys.ACTIVE_METER_ID]?.takeIf { it > 0L },
+            accentColor = prefs[Keys.ACCENT_COLOR]?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() } ?: AccentColor.BLUE,
         )
     }
 
@@ -42,4 +45,5 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setDefaultTarget(target: Double) = context.dataStore.edit { it[Keys.DEFAULT_TARGET] = target }.let {}
     suspend fun setAllowDecimals(allow: Boolean) = context.dataStore.edit { it[Keys.ALLOW_DECIMALS] = allow }.let {}
     suspend fun setActiveMeterId(id: Long?) = context.dataStore.edit { it[Keys.ACTIVE_METER_ID] = (id ?: 0L) }.let {}
+    suspend fun setAccentColor(color: AccentColor) = context.dataStore.edit { it[Keys.ACCENT_COLOR] = color.name }.let {}
 }

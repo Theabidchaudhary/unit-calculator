@@ -2,8 +2,12 @@ package com.orwyx.unitcalculator.ui.screens.settings
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,15 +16,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Upload
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -39,11 +44,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.orwyx.unitcalculator.core.util.Formatters
+import com.orwyx.unitcalculator.domain.model.AccentColor
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 import com.orwyx.unitcalculator.ui.components.NeumorphicCard
 import com.orwyx.unitcalculator.ui.components.SectionHeader
@@ -118,6 +126,49 @@ fun SettingsScreen(
                             )
                             Spacer(Modifier.height(0.dp))
                             Text(mode.name.lowercase().replaceFirstChar { it.uppercase() })
+                        }
+                    }
+                }
+            }
+
+            SectionHeader("Accent colour")
+            NeumorphicCard(modifier = Modifier.fillMaxWidth()) {
+                Column {
+                    Text("App colour", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Changes the main colour used throughout the app.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        AccentColor.entries.forEach { accent ->
+                            val selected = settings.accentColor == accent
+                            val accentHue = accentColorValue(accent)
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(accentHue)
+                                    .then(
+                                        if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                                        else Modifier
+                                    )
+                                    .clickable { viewModel.setAccentColor(accent) },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (selected) {
+                                    Icon(
+                                        Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -227,6 +278,15 @@ fun SettingsScreen(
             Spacer(Modifier.height(24.dp))
         }
     }
+}
+
+private fun accentColorValue(accent: AccentColor): Color = when (accent) {
+    AccentColor.BLUE   -> Color(0xFF3A5BFF)
+    AccentColor.PURPLE -> Color(0xFF7C4DFF)
+    AccentColor.TEAL   -> Color(0xFF0097A7)
+    AccentColor.GREEN  -> Color(0xFF00897B)
+    AccentColor.ORANGE -> Color(0xFFE65100)
+    AccentColor.PINK   -> Color(0xFFD81B60)
 }
 
 @Composable

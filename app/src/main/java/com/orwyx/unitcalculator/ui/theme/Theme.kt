@@ -11,6 +11,8 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.compose.ui.graphics.Color
+import com.orwyx.unitcalculator.domain.model.AccentColor
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 
 private val LightColors = lightColorScheme(
@@ -54,9 +56,19 @@ val LocalNeuColors = staticCompositionLocalOf {
     NeuColors(NeuLightShadow, NeuLightHighlight, isDark = false)
 }
 
+private fun accentPair(accent: AccentColor): Pair<Color, Color> = when (accent) {
+    AccentColor.BLUE   -> Blue500 to Blue400
+    AccentColor.PURPLE -> Color(0xFF7C4DFF) to Color(0xFF9575CD)
+    AccentColor.TEAL   -> Color(0xFF0097A7) to Color(0xFF4DD0E1)
+    AccentColor.GREEN  -> Color(0xFF00897B) to Color(0xFF4DB6AC)
+    AccentColor.ORANGE -> Color(0xFFE65100) to Color(0xFFFFAB40)
+    AccentColor.PINK   -> Color(0xFFD81B60) to Color(0xFFF48FB1)
+}
+
 @Composable
 fun UnitCalculatorTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
+    accentColor: AccentColor = AccentColor.BLUE,
     content: @Composable () -> Unit,
 ) {
     val dark = when (themeMode) {
@@ -64,7 +76,9 @@ fun UnitCalculatorTheme(
         ThemeMode.DARK -> true
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
-    val colors = if (dark) DarkColors else LightColors
+    val (primary500, primary400) = accentPair(accentColor)
+    val colors = if (dark) DarkColors.copy(primary = primary400, secondary = primary500)
+    else LightColors.copy(primary = primary500, secondary = primary400)
     val neu = if (dark) NeuColors(NeuDarkShadow, NeuDarkHighlight, true)
     else NeuColors(NeuLightShadow, NeuLightHighlight, false)
 

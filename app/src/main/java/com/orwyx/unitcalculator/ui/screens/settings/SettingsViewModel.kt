@@ -6,9 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.orwyx.unitcalculator.backup.BackupManager
 import com.orwyx.unitcalculator.backup.BackupResult
+import com.orwyx.unitcalculator.domain.model.AccentColor
 import com.orwyx.unitcalculator.domain.model.AppSettings
 import com.orwyx.unitcalculator.domain.model.ThemeMode
-import com.orwyx.unitcalculator.domain.repository.HistoryRepository
 import com.orwyx.unitcalculator.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -26,7 +26,6 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
-    private val historyRepository: HistoryRepository,
     private val backupManager: BackupManager,
 ) : ViewModel() {
 
@@ -41,7 +40,7 @@ class SettingsViewModel @Inject constructor(
     fun setReadingDate(day: Int) = viewModelScope.launch { settingsRepository.setReadingDate(day) }
     fun setDefaultTarget(target: Double) = viewModelScope.launch { settingsRepository.setDefaultTarget(target) }
     fun setAllowDecimals(allow: Boolean) = viewModelScope.launch { settingsRepository.setAllowDecimals(allow) }
-    fun clearHistory() = viewModelScope.launch { historyRepository.clearAll() }
+    fun setAccentColor(color: AccentColor) = viewModelScope.launch { settingsRepository.setAccentColor(color) }
 
     fun consumeMessage() { _message.value = null }
 

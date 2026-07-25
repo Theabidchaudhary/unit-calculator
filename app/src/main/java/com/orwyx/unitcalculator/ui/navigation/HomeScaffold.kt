@@ -3,7 +3,6 @@ package com.orwyx.unitcalculator.ui.navigation
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -20,7 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.orwyx.unitcalculator.ui.components.AddMeterFab
 import com.orwyx.unitcalculator.ui.screens.meters.MetersScreen
 import com.orwyx.unitcalculator.ui.screens.planning.PlanningScreen
 import kotlinx.coroutines.launch
@@ -53,12 +51,9 @@ fun HomeScaffold(
         Box(Modifier.fillMaxSize()) {
             HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), pageSpacing = 0.dp) { page ->
                 when (page) {
-                    0 -> MetersScreen(onOpenMeter = onOpenMeter, contentPadding = padding)
+                    0 -> MetersScreen(onOpenMeter = onOpenMeter, onAddMeter = onAddMeter, contentPadding = padding)
                     1 -> PlanningScreen(contentPadding = padding)
                 }
-            }
-            if (selectedTab == BottomTab.METERS) {
-                AddMeterFab(onClick = onAddMeter, modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(end = 28.dp, bottom = 96.dp))
             }
             GlassBottomNav(currentRoute = selectedTab.route, onTabSelected = ::selectTab, modifier = Modifier.align(Alignment.BottomCenter))
         }

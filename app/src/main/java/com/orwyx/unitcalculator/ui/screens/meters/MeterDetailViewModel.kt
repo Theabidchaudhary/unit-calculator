@@ -8,8 +8,6 @@ import com.orwyx.unitcalculator.domain.engine.CalculationEngine
 import com.orwyx.unitcalculator.domain.engine.PlanningEngine
 import com.orwyx.unitcalculator.domain.model.AppSettings
 import com.orwyx.unitcalculator.domain.model.Meter
-import com.orwyx.unitcalculator.domain.model.ReadingHistory
-import com.orwyx.unitcalculator.domain.repository.HistoryRepository
 import com.orwyx.unitcalculator.domain.repository.MeterRepository
 import com.orwyx.unitcalculator.domain.repository.SettingsRepository
 import com.orwyx.unitcalculator.ui.navigation.Routes
@@ -19,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -27,7 +26,6 @@ import javax.inject.Inject
 
 data class MeterDetailUiState(
     val meter: Meter? = null,
-    val history: List<ReadingHistory> = emptyList(),
     val settings: AppSettings = AppSettings(),
     val avgDailyUsage: Double = 0.0,
     val projectedMonthEnd: Double = 0.0,
@@ -38,7 +36,6 @@ data class MeterDetailUiState(
 @HiltViewModel
 class MeterDetailViewModel @Inject constructor(
     private val meterRepository: MeterRepository,
-    historyRepository: HistoryRepository,
     settingsRepository: SettingsRepository,
     private val calculationEngine: CalculationEngine,
     private val planningEngine: PlanningEngine,
@@ -50,9 +47,8 @@ class MeterDetailViewModel @Inject constructor(
     val uiState: StateFlow<MeterDetailUiState> = combine(
         meterRepository.observeMeter(meterId),
         meterRepository.observeMeters(),
-        historyRepository.observeForMeter(meterId),
         settingsRepository.observeSettings(),
-    ) { meter, allMeters, history, settings ->
+    ) { meter, allMeters, settings ->
         val cycle = BillingCycle.of(settings.readingDate)
         val phase = planningEngine.computePhases(allMeters, cycle).firstOrNull { it.meter.id == meterId }
         val phaseDays = phase?.allocatedDays ?: cycle.totalDays
@@ -60,7 +56,6 @@ class MeterDetailViewModel @Inject constructor(
         val projected = avgDaily * phaseDays
         MeterDetailUiState(
             meter = meter,
-            history = history,
             settings = settings,
             avgDailyUsage = avgDaily,
             projectedMonthEnd = projected,

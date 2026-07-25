@@ -24,8 +24,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             val rootViewModel: RootViewModel = hiltViewModel()
             val themeMode by rootViewModel.themeMode.collectAsStateWithLifecycle()
+            val accentColor by rootViewModel.accentColor.collectAsStateWithLifecycle()
 
-            UnitCalculatorTheme(themeMode = themeMode) {
+            UnitCalculatorTheme(themeMode = themeMode, accentColor = accentColor) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
