@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.orwyx.unitcalculator.core.util.Formatters
 import com.orwyx.unitcalculator.domain.model.Meter
@@ -149,7 +150,8 @@ fun MeterCard(
                 CurrentReadingRow(
                     meter = meter,
                     allowDecimals = allowDecimals,
-                    isClosed = isClosed || reorderMode,
+                    isClosed = isClosed,
+                    isReorderMode = reorderMode,
                     onSubmit = onCurrentReadingSubmit,
                     onCalendarClick = { if (!reorderMode) showCloseDatePicker = true },
                     onClearClosedDate = { if (!reorderMode) onSetClosedDate(null) },
@@ -226,7 +228,7 @@ private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClic
     val contentColor = if (hasDate) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         modifier = Modifier
-            .width(88.dp)
+            .width(72.dp)
             .height(58.dp)
             .clip(MaterialTheme.shapes.medium)
             .background(bg)
@@ -277,10 +279,12 @@ private fun CurrentReadingRow(
     meter: Meter,
     allowDecimals: Boolean,
     isClosed: Boolean,
+    isReorderMode: Boolean,
     onSubmit: (Meter, String) -> Unit,
     onCalendarClick: () -> Unit,
     onClearClosedDate: () -> Unit,
 ) {
+    val fieldDisabled = isClosed || isReorderMode
     var fieldValue by rememberSaveable(meter.id, meter.currentReading) {
         mutableStateOf(formatReading(meter.currentReading, allowDecimals))
     }
@@ -290,7 +294,7 @@ private fun CurrentReadingRow(
     val buttonInteraction = remember { MutableInteractionSource() }
 
     fun submit() {
-        if (isClosed) return
+        if (fieldDisabled) return
         val trimmed = fieldValue.trim()
         if (trimmed.isEmpty()) return
         onSubmit(meter, trimmed)
@@ -303,22 +307,35 @@ private fun CurrentReadingRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        CloseDateIconButton(closedDate = meter.closedDate, enabled = !isClosed, onClick = onCalendarClick, onClear = onClearClosedDate)
+        CloseDateIconButton(
+            closedDate = meter.closedDate,
+            enabled = !isReorderMode,
+            onClick = onCalendarClick,
+            onClear = onClearClosedDate,
+        )
         OutlinedTextField(
             value = fieldValue, onValueChange = { fieldValue = it },
-            label = { Text("Current reading", modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
+            label = {
+                Text(
+                    "Current reading",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
             singleLine = true,
-            enabled = !isClosed, shape = MaterialTheme.shapes.medium,
+            enabled = !fieldDisabled, shape = MaterialTheme.shapes.medium,
             textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
             modifier = Modifier.weight(1f).heightIn(min = 58.dp).focusRequester(focusRequester),
         )
         Button(
-            onClick = { submit() }, interactionSource = buttonInteraction, enabled = !isClosed,
-            modifier = Modifier.width(88.dp).height(58.dp).pressScale(buttonInteraction),
+            onClick = { submit() }, interactionSource = buttonInteraction, enabled = !fieldDisabled,
+            modifier = Modifier.width(72.dp).height(58.dp).pressScale(buttonInteraction),
             shape = MaterialTheme.shapes.medium,
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp),
         ) { Text("Calculate", style = MaterialTheme.typography.labelMedium) }
     }
 }
@@ -334,16 +351,18 @@ private fun SafeBudgetChip(meter: Meter, phase: MeterPhase?, remainingDays: Int,
     val color = ConsumptionColors.colorFor(meter.usedFraction)
     val text = when {
         isClosed -> "${Formatters.units(remaining)} units left"
-        !isActive && phase?.isPending == true -> "Waiting for Meter ${phase.sequenceIndex + 1}"
-        !isActive -> "Waiting for previous meter"
+        !isActive -> if (phase != null && phase.isPending && phase.sequenceIndex > 0)
+            "Waiting for Meter ${phase.sequenceIndex}"
+        else
+            "${Formatters.units(remaining)} units left"
         remaining <= 0.0 -> "Over by ${Formatters.units(-remaining)} units"
         phase == null -> {
-            if (remainingDays > 0) "~${Formatters.units(remaining / remainingDays)}/day · $remainingDays days left"
+            if (remainingDays > 0) "${Formatters.units(remaining / remainingDays)} units/day safe limit · $remainingDays days left"
             else "${Formatters.units(remaining)} units left"
         }
         phase.isComplete -> "${Formatters.units(remaining)} units left"
         phase.remainingDaysInPhase > 0 ->
-            "~${Formatters.units(remaining / phase.remainingDaysInPhase)}/day · ${phase.remainingDaysInPhase} days left"
+            "${Formatters.units(remaining / phase.remainingDaysInPhase)} units/day safe limit · ${phase.remainingDaysInPhase} days left"
         else -> "${Formatters.units(remaining)} units left"
     }
     Text(
