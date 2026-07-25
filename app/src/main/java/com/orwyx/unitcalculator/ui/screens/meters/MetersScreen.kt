@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BatteryChargingFull
+import androidx.compose.material.icons.rounded.ElectricMeter
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.Savings
