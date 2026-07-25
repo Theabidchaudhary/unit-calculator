@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.orwyx.unitcalculator.core.util.BillingCycle
 import com.orwyx.unitcalculator.domain.engine.CalculationEngine
+import com.orwyx.unitcalculator.domain.engine.PlanningEngine
 import com.orwyx.unitcalculator.domain.model.AppSettings
 import com.orwyx.unitcalculator.domain.model.Meter
 import com.orwyx.unitcalculator.domain.model.ReadingHistory
@@ -31,6 +32,7 @@ data class MeterDetailUiState(
     val avgDailyUsage: Double = 0.0,
     val projectedMonthEnd: Double = 0.0,
     val projectedOverage: Double = 0.0,
+    val projectedPeriodDays: Int = 0,
 )
 
 @HiltViewModel
@@ -39,6 +41,7 @@ class MeterDetailViewModel @Inject constructor(
     historyRepository: HistoryRepository,
     settingsRepository: SettingsRepository,
     private val calculationEngine: CalculationEngine,
+    private val planningEngine: PlanningEngine,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -46,17 +49,23 @@ class MeterDetailViewModel @Inject constructor(
 
     val uiState: StateFlow<MeterDetailUiState> = combine(
         meterRepository.observeMeter(meterId),
+        meterRepository.observeMeters(),
         historyRepository.observeForMeter(meterId),
         settingsRepository.observeSettings(),
-    ) { meter, history, settings ->
+    ) { meter, allMeters, history, settings ->
         val cycle = BillingCycle.of(settings.readingDate)
+        val phase = planningEngine.computePhases(allMeters, cycle).firstOrNull { it.meter.id == meterId }
+        val phaseDays = phase?.allocatedDays ?: cycle.totalDays
+        val avgDaily = meter?.let { calculationEngine.averageDailyUsage(it, cycle) } ?: 0.0
+        val projected = avgDaily * phaseDays
         MeterDetailUiState(
             meter = meter,
             history = history,
             settings = settings,
-            avgDailyUsage = meter?.let { calculationEngine.averageDailyUsage(it, cycle) } ?: 0.0,
-            projectedMonthEnd = meter?.let { calculationEngine.projectedMonthEnd(it, cycle) } ?: 0.0,
-            projectedOverage = meter?.let { calculationEngine.projectedOverage(it, cycle) } ?: 0.0,
+            avgDailyUsage = avgDaily,
+            projectedMonthEnd = projected,
+            projectedOverage = projected - (meter?.targetLimit ?: 0.0),
+            projectedPeriodDays = phaseDays,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MeterDetailUiState())
 

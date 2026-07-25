@@ -117,7 +117,7 @@ fun MeterDetailScreen(
                 NeumorphicCard(modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         DetailStat("Avg / day", Formatters.units(state.avgDailyUsage))
-                        DetailStat("Projected", Formatters.units(state.projectedMonthEnd))
+                        DetailStat("Projected (${state.projectedPeriodDays}d)", Formatters.units(state.projectedMonthEnd))
                         DetailStat(
                             if (state.projectedOverage > 0) "Over by" else "Under by",
                             Formatters.units(kotlin.math.abs(state.projectedOverage)),

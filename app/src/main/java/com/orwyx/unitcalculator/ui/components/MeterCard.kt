@@ -30,7 +30,6 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -107,14 +106,12 @@ fun MeterCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(meter.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        }
                         Text(
                             "Meter $sequenceNumber",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        Text(meter.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     }
                     StatusBadge(meter.status)
                     Spacer(Modifier.size(8.dp))
@@ -126,12 +123,10 @@ fun MeterCard(
                 }
 
                 Spacer(Modifier.height(6.dp))
-                var revealed by remember(meter.id) { mutableStateOf(false) }
                 Text(
-                    text = if (revealed) meter.referenceNumber else Formatters.maskedReference(meter.referenceNumber),
+                    text = Formatters.maskedReference(meter.referenceNumber),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.clickable(enabled = !reorderMode) { revealed = !revealed },
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -224,25 +219,41 @@ private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClic
     val fmt = remember { DateTimeFormatter.ofPattern("d MMM") }
     val interaction = remember { MutableInteractionSource() }
     val hasDate = closedDate != null
-    val tint = if (hasDate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-    val bg = if (hasDate) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    val bg = if (hasDate) StatusRed else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    val contentColor = if (hasDate) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
     Box {
-        Column(
+        Box(
             modifier = Modifier
-                .clip(MaterialTheme.shapes.small).background(bg)
+                .height(58.dp)
+                .clip(MaterialTheme.shapes.medium)
+                .background(bg)
                 .pressScale(interaction, pressedScale = 0.88f)
                 .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = 14.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Rounded.CalendarMonth, contentDescription = if (hasDate) "Closed ${closedDate!!.format(fmt)}" else "Set closed date", tint = tint, modifier = Modifier.size(18.dp))
             if (hasDate) {
-                Text(closedDate!!.format(fmt), style = MaterialTheme.typography.labelSmall, color = tint, fontWeight = FontWeight.Medium)
+                Text(
+                    text = closedDate!!.format(fmt),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = contentColor,
+                    fontWeight = FontWeight.Bold,
+                )
+            } else {
+                Icon(Icons.Rounded.CalendarMonth, contentDescription = "Set closed date", tint = contentColor, modifier = Modifier.size(22.dp))
             }
         }
         if (hasDate) {
-            IconButton(onClick = onClear, modifier = Modifier.align(Alignment.TopEnd).size(16.dp)) {
-                Icon(Icons.Rounded.Close, contentDescription = "Clear closed date", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(18.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
+                    .clickable(onClick = onClear),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Rounded.Close, contentDescription = "Clear date", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(10.dp))
             }
         }
     }
@@ -327,16 +338,16 @@ private fun SafeBudgetChip(meter: Meter, phase: MeterPhase?, remainingDays: Int)
     val remaining = meter.remainingUnits
     val color = ConsumptionColors.colorFor(meter.usedFraction)
     val text = when {
-        remaining <= 0.0 -> "Over limit by ${Formatters.units(-remaining)} units"
+        remaining <= 0.0 -> "Over by ${Formatters.units(-remaining)} units"
         phase == null -> {
-            if (remainingDays > 0) "≈ ${Formatters.units(remaining / remainingDays)} units/day left to stay safe"
-            else "${Formatters.units(remaining)} units left this cycle"
+            if (remainingDays > 0) "Max ${Formatters.units(remaining / remainingDays)}/day · $remainingDays days left"
+            else "${Formatters.units(remaining)} units left"
         }
-        phase.isComplete -> "${Formatters.units(remaining)} units left until threshold"
-        phase.isPending -> "Not started yet — waiting for meter ${phase.sequenceIndex}"
+        phase.isComplete -> "${Formatters.units(remaining)} units left"
+        phase.isPending -> "Waiting for Meter ${phase.sequenceIndex + 1}"
         phase.remainingDaysInPhase > 0 ->
-            "≈ ${Formatters.units(remaining / phase.remainingDaysInPhase)} units/day (${phase.remainingDaysInPhase}d left in phase)"
-        else -> "${Formatters.units(remaining)} units remaining in phase"
+            "Max ${Formatters.units(remaining / phase.remainingDaysInPhase)}/day · ${phase.remainingDaysInPhase} days left"
+        else -> "${Formatters.units(remaining)} units left"
     }
     Text(
         text = text, style = MaterialTheme.typography.labelLarge, color = color,

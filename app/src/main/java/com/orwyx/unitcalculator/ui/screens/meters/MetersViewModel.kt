@@ -50,6 +50,22 @@ class MetersViewModel @Inject constructor(
     private val planningEngine: PlanningEngine,
 ) : ViewModel() {
 
+    init {
+        viewModelScope.launch {
+            combine(
+                meterRepository.observeMeters(),
+                settingsRepository.observeSettings(),
+            ) { meters, settings -> meters to settings }.collect { (meters, settings) ->
+                if (meters.isNotEmpty()) {
+                    val activeId = settings.activeMeterId
+                    if (activeId == null || meters.none { it.id == activeId }) {
+                        settingsRepository.setActiveMeterId(meters.first().id)
+                    }
+                }
+            }
+        }
+    }
+
     private val query = MutableStateFlow("")
     private val sort = MutableStateFlow(MeterSort.SEQUENCE)
     private val reorderMode = MutableStateFlow(false)
@@ -135,8 +151,10 @@ class MetersViewModel @Inject constructor(
     fun toggleActiveMeter(meter: Meter) {
         viewModelScope.launch {
             val current = settingsRepository.observeSettings().first().activeMeterId
-            val newId = if (current == meter.id) null else meter.id
-            settingsRepository.setActiveMeterId(newId)
+            // Can't deactivate — can only switch to a different meter
+            if (current != meter.id) {
+                settingsRepository.setActiveMeterId(meter.id)
+            }
         }
     }
 

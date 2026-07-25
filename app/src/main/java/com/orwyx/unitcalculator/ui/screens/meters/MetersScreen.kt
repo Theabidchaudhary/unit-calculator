@@ -25,7 +25,6 @@ import androidx.compose.material.icons.rounded.Savings
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -222,7 +221,7 @@ private fun DashboardRow(state: MetersUiState, onResetAll: () -> Unit) {
             }
             Spacer(Modifier.height(10.dp))
         }
-        TextButton(onClick = onResetAll, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = onResetAll, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
             Text("Reset cycle", style = MaterialTheme.typography.labelLarge)
         }
     }
