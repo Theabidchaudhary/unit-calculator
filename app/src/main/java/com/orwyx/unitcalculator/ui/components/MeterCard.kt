@@ -31,7 +31,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.PowerSettingsNew
-import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -64,8 +63,10 @@ import com.orwyx.unitcalculator.core.util.Formatters
 import com.orwyx.unitcalculator.domain.model.Meter
 import com.orwyx.unitcalculator.domain.model.MeterPhase
 import com.orwyx.unitcalculator.ui.theme.ConsumptionColors
+import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
 import com.orwyx.unitcalculator.ui.theme.StatusDeepGreen
 import com.orwyx.unitcalculator.ui.theme.StatusRed
+import com.orwyx.unitcalculator.ui.theme.WarmAccent
 import com.orwyx.unitcalculator.ui.theme.pressScale
 import java.time.Instant
 import java.time.LocalDate
@@ -102,13 +103,9 @@ fun MeterCard(
         label = "wiggle",
     )
 
-    val cardBg = meterColor?.copy(alpha = 0.13f)
-    val nameColor = meterColor ?: MaterialTheme.colorScheme.onSurface
-
     Box(modifier = modifier.rotate(if (reorderMode) wiggleRotation else 0f)) {
         NeumorphicCard(
             modifier = Modifier.fillMaxWidth(),
-            backgroundColor = cardBg,
             onClick = if (reorderMode) ({}) else onClick,
         ) {
             Column {
@@ -127,7 +124,7 @@ fun MeterCard(
                             meter.name,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = nameColor,
+                            color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         )
@@ -212,17 +209,19 @@ fun MeterCard(
 @Composable
 private fun PowerButton(isActive: Boolean, isClosed: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
-    val (tint, bg) = when {
-        isClosed -> MaterialTheme.colorScheme.onPrimary to StatusRed
-        isActive -> MaterialTheme.colorScheme.onPrimary to StatusDeepGreen
-        else -> MaterialTheme.colorScheme.onSurfaceVariant to MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    val isDark = LocalNeuColors.current.isDark
+    val (tint, solidBg, accent) = when {
+        isClosed -> Triple(Color.White, StatusRed, StatusRed)
+        isActive -> Triple(Color.White, StatusDeepGreen, StatusDeepGreen)
+        else -> Triple(Color.White.copy(alpha = 0.7f), if (isDark) Color(0xFF2D2D2D) else Color.White, WarmAccent)
     }
     Box(
         modifier = Modifier
             .size(36.dp)
             .pressScale(interaction, pressedScale = 0.88f)
             .clip(MaterialTheme.shapes.small)
-            .background(bg)
+            .background(solidBg)
+            .accentGradientOverlay(accent = accent, cornerRadius = 8.dp)
             .clickable(interactionSource = interaction, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -263,15 +262,18 @@ private fun ClosedPill() {
 private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClick: () -> Unit, onClear: () -> Unit) {
     val fmt = remember { DateTimeFormatter.ofPattern("d MMM") }
     val interaction = remember { MutableInteractionSource() }
+    val isDark = LocalNeuColors.current.isDark
     val hasDate = closedDate != null
-    val bg = if (hasDate) StatusRed else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-    val contentColor = if (hasDate) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+    val solidBg = if (hasDate) StatusRed else if (isDark) Color(0xFF2D2D2D) else Color.White
+    val accent = if (hasDate) StatusRed else WarmAccent
+    val contentColor = Color.White
     Box(
         modifier = Modifier
             .width(72.dp)
             .height(52.dp)
             .clip(MaterialTheme.shapes.medium)
-            .background(bg)
+            .background(solidBg)
+            .accentGradientOverlay(accent = accent, cornerRadius = 12.dp)
             .pressScale(interaction, pressedScale = 0.88f)
             .combinedClickable(
                 interactionSource = interaction,
@@ -371,12 +373,30 @@ private fun CurrentReadingRow(
             keyboardActions = KeyboardActions(onDone = { submit() }),
             modifier = Modifier.weight(1f).heightIn(min = 52.dp).focusRequester(focusRequester),
         )
-        Button(
-            onClick = { submit() }, interactionSource = buttonInteraction, enabled = !fieldDisabled,
-            modifier = Modifier.width(72.dp).height(52.dp).pressScale(buttonInteraction),
-            shape = MaterialTheme.shapes.medium,
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp),
-        ) { Text("Calculate", style = MaterialTheme.typography.labelMedium) }
+        val isDark = LocalNeuColors.current.isDark
+        val solidBg = if (isDark) Color(0xFF2D2D2D) else Color.White
+        Box(
+            modifier = Modifier
+                .width(72.dp)
+                .height(52.dp)
+                .pressScale(buttonInteraction)
+                .clip(MaterialTheme.shapes.medium)
+                .background(if (fieldDisabled) solidBg.copy(alpha = 0.4f) else solidBg)
+                .accentGradientOverlay(cornerRadius = 12.dp)
+                .clickable(
+                    interactionSource = buttonInteraction,
+                    indication = null,
+                    enabled = !fieldDisabled,
+                    onClick = { submit() },
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                "Calculate",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (fieldDisabled) Color.White.copy(alpha = 0.45f) else Color.White,
+            )
+        }
     }
 }
 

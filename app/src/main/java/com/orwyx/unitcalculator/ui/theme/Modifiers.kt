@@ -32,15 +32,12 @@ fun Modifier.neumorphic(
     surface: Color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
 ): Modifier {
     val isDark    = LocalNeuColors.current.isDark
-    // Use supplied surface only if it has a non-trivial alpha (i.e. a meter color tint)
-    val glassBase = if (surface.alpha in 0.01f..0.99f) surface
-                   else if (isDark) Color.White.copy(alpha = 0.09f)
-                   else Color.White.copy(alpha = 0.60f)
+    val glassBase = if (isDark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.22f)
 
-    val borderAlpha = if (isDark) 0.18f else 0.70f
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.45f else 0.12f)
-    val sheenAlpha  = if (isDark) 0.12f else 0.28f
-    val cornerDp    = 24.dp  // matches the default; shape corner is resolved in DrawScope
+    val borderAlpha = if (isDark) 0.30f else 0.55f
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.25f)
+    val sheenAlpha  = if (isDark) 0.20f else 0.35f
+    val cornerDp    = 24.dp
 
     return this
         .shadow(elevation, shape, ambientColor = shadowColor, spotColor = shadowColor)
@@ -73,10 +70,10 @@ fun Modifier.neumorphic(
 /** Frosted-glass bar modifier for top bars and bottom bars. */
 @Composable
 fun Modifier.glassBar(isDark: Boolean): Modifier {
-    val base        = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.62f)
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.40f else 0.12f)
-    val sheenAlpha  = if (isDark) 0.10f else 0.26f
-    val borderAlpha = if (isDark) 0.16f else 0.62f
+    val base        = if (isDark) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.20f)
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.55f else 0.30f)
+    val sheenAlpha  = if (isDark) 0.18f else 0.30f
+    val borderAlpha = if (isDark) 0.28f else 0.50f
 
     return this
         .shadow(10.dp, ambientColor = shadowColor, spotColor = shadowColor)

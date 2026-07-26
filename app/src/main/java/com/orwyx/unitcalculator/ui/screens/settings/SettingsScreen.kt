@@ -3,7 +3,6 @@ package com.orwyx.unitcalculator.ui.screens.settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,13 +20,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,10 +49,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -64,13 +57,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.orwyx.unitcalculator.domain.model.AppTheme
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 import com.orwyx.unitcalculator.ui.components.NeumorphicCard
 import com.orwyx.unitcalculator.ui.components.SectionHeader
+import com.orwyx.unitcalculator.ui.components.accentGradientOverlay
 import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
+import com.orwyx.unitcalculator.ui.theme.WarmAccent
 import com.orwyx.unitcalculator.ui.theme.glassBar
-import com.orwyx.unitcalculator.ui.theme.themeData
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -159,31 +152,12 @@ fun SettingsScreen(
             NeumorphicCard(modifier = Modifier.fillMaxWidth()) {
                 Column {
                     Text("Background & Accent", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(4.dp))
                     Text(
-                        "Choose the fluid background and accent colour for the whole app.",
+                        "Warm Room — more themes coming soon.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(14.dp))
-                    // 2-column grid of theme preview cards
-                    val themes = AppTheme.entries
-                    themes.chunked(2).forEach { row ->
-                        Row(
-                            modifier              = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            row.forEach { theme ->
-                                ThemePreviewCard(
-                                    theme    = theme,
-                                    selected = settings.appTheme == theme,
-                                    onClick  = { viewModel.setAppTheme(theme) },
-                                    modifier = Modifier.weight(1f),
-                                )
-                            }
-                            if (row.size == 1) Spacer(Modifier.weight(1f))
-                        }
-                        Spacer(Modifier.height(10.dp))
-                    }
                 }
             }
 
@@ -207,14 +181,21 @@ fun SettingsScreen(
                                     val day = rowIdx * 7 + colIdx
                                     if (day <= 31) {
                                         val selected = settings.readingDate == day
+                                        val solidBg = when {
+                                            selected -> if (isDark) Color(0xFF2D2D2D) else Color.White
+                                            else -> Color.White.copy(alpha = if (isDark) 0.10f else 0.18f)
+                                        }
                                         Box(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .aspectRatio(1f)
                                                 .clip(CircleShape)
-                                                .background(
-                                                    if (selected) MaterialTheme.colorScheme.primary
-                                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                                .background(solidBg)
+                                                .then(
+                                                    if (selected) Modifier.accentGradientOverlay(
+                                                        accent = WarmAccent,
+                                                        cornerRadius = 50.dp,
+                                                    ) else Modifier
                                                 )
                                                 .clickable { viewModel.setReadingDate(day) },
                                             contentAlignment = Alignment.Center,
@@ -223,8 +204,7 @@ fun SettingsScreen(
                                                 day.toString(),
                                                 style      = MaterialTheme.typography.labelMedium,
                                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                                color      = if (selected) MaterialTheme.colorScheme.onPrimary
-                                                             else MaterialTheme.colorScheme.onSurface,
+                                                color      = Color.White,
                                             )
                                         }
                                     } else {
@@ -308,104 +288,6 @@ fun SettingsScreen(
     }
 }
 
-@Composable
-private fun ThemePreviewCard(
-    theme: AppTheme,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val data    = themeData(theme)
-    val isDark  = LocalNeuColors.current.isDark
-    val primary = MaterialTheme.colorScheme.primary
-    val shape   = RoundedCornerShape(16.dp)
-    val onText  = if (isDark) Color.White else Color.White
-
-    Box(
-        modifier = modifier
-            .aspectRatio(1.65f)
-            .clip(shape)
-            .then(
-                if (selected) Modifier.border(2.dp, primary, shape)
-                else Modifier.border(1.dp, Color.White.copy(alpha = if (isDark) 0.15f else 0.5f), shape)
-            )
-            .drawBehind {
-                val w = size.width
-                val h = size.height
-                // Background base
-                drawRect(color = if (isDark) data.bgDark else data.bgLight)
-                // Blob 1
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(data.blob1.copy(alpha = 0.80f), Color.Transparent),
-                        center = Offset(w * 0.35f, h * 0.30f),
-                        radius = w * 0.65f,
-                    ),
-                    radius = w * 0.65f,
-                    center = Offset(w * 0.35f, h * 0.30f),
-                )
-                // Blob 2
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(data.blob2.copy(alpha = 0.70f), Color.Transparent),
-                        center = Offset(w * 0.75f, h * 0.70f),
-                        radius = w * 0.55f,
-                    ),
-                    radius = w * 0.55f,
-                    center = Offset(w * 0.75f, h * 0.70f),
-                )
-                // Blob 3
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(data.blob3.copy(alpha = 0.60f), Color.Transparent),
-                        center = Offset(w * 0.85f, h * 0.25f),
-                        radius = w * 0.40f,
-                    ),
-                    radius = w * 0.40f,
-                    center = Offset(w * 0.85f, h * 0.25f),
-                )
-                // Frosted glass overlay
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color.White.copy(alpha = 0.10f), Color.Transparent),
-                        startY = 0f, endY = h * 0.5f,
-                    ),
-                )
-            }
-            .clickable(onClick = onClick)
-            .padding(10.dp),
-        contentAlignment = Alignment.BottomStart,
-    ) {
-        Row(
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text      = theme.displayName,
-                style     = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color     = onText,
-                modifier  = Modifier.weight(1f),
-            )
-            if (selected) {
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(CircleShape)
-                        .background(primary),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        Icons.Rounded.Check,
-                        contentDescription = null,
-                        tint     = Color.White,
-                        modifier = Modifier.size(13.dp),
-                    )
-                }
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

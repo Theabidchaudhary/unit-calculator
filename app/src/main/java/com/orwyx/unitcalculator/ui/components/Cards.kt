@@ -15,79 +15,82 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
+import com.orwyx.unitcalculator.ui.theme.WarmAccent
 
-/** Frosted-glass card surface used throughout the app. */
+/** Strong frosted-glass card. [backgroundColor] is ignored — always pure glass. */
 @Composable
 fun NeumorphicCard(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 24.dp,
     contentPadding: Dp = 18.dp,
-    backgroundColor: Color? = null,
+    backgroundColor: Color? = null,  // kept for API compat; not used
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     val shape  = RoundedCornerShape(cornerRadius)
     val isDark = LocalNeuColors.current.isDark
 
-    // When a meter color tint is supplied, blend it into the glass base
-    val glassBase = when {
-        backgroundColor != null && isDark -> {
-            val t = backgroundColor
-            Color(
-                red   = (0.09f + t.red   * t.alpha * 0.9f).coerceAtMost(1f),
-                green = (0.09f + t.green * t.alpha * 0.9f).coerceAtMost(1f),
-                blue  = (0.09f + t.blue  * t.alpha * 0.9f).coerceAtMost(1f),
-                alpha = (0.14f + t.alpha * 0.9f).coerceAtMost(0.40f),
-            )
-        }
-        backgroundColor != null -> {
-            val t = backgroundColor
-            Color(
-                red   = (0.60f + t.red   * t.alpha * 0.8f).coerceAtMost(1f),
-                green = (0.60f + t.green * t.alpha * 0.8f).coerceAtMost(1f),
-                blue  = (0.60f + t.blue  * t.alpha * 0.8f).coerceAtMost(1f),
-                alpha = (0.62f + t.alpha * 0.7f).coerceAtMost(0.90f),
-            )
-        }
-        isDark -> Color.White.copy(alpha = 0.09f)
-        else   -> Color.White.copy(alpha = 0.62f)
-    }
-
-    val borderAlpha = if (isDark) 0.18f else 0.72f
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.45f else 0.12f)
-    val sheenAlpha  = if (isDark) 0.13f else 0.28f
+    // Stronger glass — clearly frosted but still see-through
+    val glassBase   = if (isDark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.22f)
+    val sheenAlpha  = if (isDark) 0.20f else 0.35f
+    val borderAlpha = if (isDark) 0.30f else 0.55f
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.25f)
 
     var base: Modifier = modifier
-        .shadow(8.dp, shape, ambientColor = shadowColor, spotColor = shadowColor)
+        .shadow(12.dp, shape, ambientColor = shadowColor, spotColor = shadowColor)
         .drawBehind {
             val cr = CornerRadius(cornerRadius.toPx())
-            // Glass fill — subtle gradient top to bottom
+            // Glass fill
             drawRoundRect(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        glassBase.copy(alpha = (glassBase.alpha + 0.10f).coerceAtMost(1f)),
+                        glassBase.copy(alpha = (glassBase.alpha + 0.08f).coerceAtMost(1f)),
                         glassBase,
                     ),
                 ),
                 cornerRadius = cr,
             )
-            // Top-edge sheen (frosted highlight)
+            // Top-edge frosted sheen
             drawRoundRect(
                 brush = Brush.verticalGradient(
                     colors = listOf(Color.White.copy(alpha = sheenAlpha), Color.Transparent),
                     startY = 0f,
-                    endY   = size.height * 0.42f,
+                    endY   = size.height * 0.45f,
                 ),
                 cornerRadius = cr,
             )
-            // 1px inner border — the defining glass edge
+            // Crisp 1.5px glass border
             drawRoundRect(
                 color        = Color.White.copy(alpha = borderAlpha),
                 cornerRadius = cr,
-                style        = Stroke(width = 1.dp.toPx()),
+                style        = Stroke(width = 1.5.dp.toPx()),
             )
         }
 
     if (onClick != null) base = base.clickable(onClick = onClick)
     Box(base.padding(contentPadding)) { content() }
+}
+
+/**
+ * Applies an accent-gradient overlay (bottom→top, fading) on top of a solid base.
+ * Use on buttons and date cells: solid base color in the caller + this modifier on top.
+ */
+fun Modifier.accentGradientOverlay(
+    accent: Color = WarmAccent,
+    cornerRadius: Dp = 12.dp,
+): Modifier {
+    return this.drawBehind {
+        val cr = CornerRadius(cornerRadius.toPx())
+        drawRoundRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    accent.copy(alpha = 0.40f),
+                ),
+                startY = 0f,
+                endY   = size.height,
+            ),
+            cornerRadius = cr,
+        )
+    }
 }

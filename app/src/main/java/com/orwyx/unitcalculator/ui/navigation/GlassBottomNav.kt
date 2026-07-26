@@ -52,10 +52,10 @@ fun GlassBottomNav(
     val tabs    = BottomTab.entries
     val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceIn(0, tabs.lastIndex)
 
-    val barGlass    = if (isDark) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.62f)
-    val barSheen    = if (isDark) 0.10f else 0.28f
-    val borderAlpha = if (isDark) 0.18f else 0.68f
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.50f else 0.18f)
+    val barGlass    = if (isDark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.22f)
+    val barSheen    = if (isDark) 0.22f else 0.38f
+    val borderAlpha = if (isDark) 0.32f else 0.55f
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.30f)
 
     BoxWithConstraints(
         modifier = modifier

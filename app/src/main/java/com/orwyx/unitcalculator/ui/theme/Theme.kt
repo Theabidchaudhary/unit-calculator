@@ -50,16 +50,17 @@ val LocalNeuColors = staticCompositionLocalOf {
     NeuColors(NeuLightShadow, NeuLightHighlight, isDark = false)
 }
 
-// Glass surface colors used by M3 for dialogs, sheets, menus
-private val GlassDarkSurface         = Color(0xFF1A1F30)
-private val GlassDarkSurfaceVariant  = Color(0xFF232840)
-private val GlassDarkOnSurface       = Color(0xFFEDF0FF)
-private val GlassDarkOnSurfaceVar    = Color(0xFF9CA3C0)
+// Warm accent that matches the room photo lighting
+private val WarmOrange = Color(0xFFE87C1A)
+private val WarmAmber  = Color(0xFFFF9933)
 
-private val GlassLightSurface        = Color(0xFFF3F6FF)
-private val GlassLightSurfaceVariant = Color(0xFFE3E8F8)
-private val GlassLightOnSurface      = Color(0xFF0F1128)
-private val GlassLightOnSurfaceVar   = Color(0xFF4A5380)
+// Always-white text on any background — the photo background is always dark-ish
+private val AlwaysWhite      = Color.White
+private val AlwaysWhiteDim   = Color.White.copy(alpha = 0.65f)
+private val AlwaysWhiteFaint = Color.White.copy(alpha = 0.40f)
+
+// Glass surface — used only for M3 internal dialogs/sheets (not our custom cards)
+private val GlassSurface = Color(0xFF2A1508)
 
 @Composable
 fun UnitCalculatorTheme(
@@ -72,53 +73,39 @@ fun UnitCalculatorTheme(
         ThemeMode.DARK   -> true
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
-    val data    = themeData(appTheme)
-    val primary = if (dark) data.accentDark else data.accentLight
 
-    val colors = if (dark) {
-        darkColorScheme(
-            primary             = primary,
-            onPrimary           = Color.White,
-            primaryContainer    = primary.copy(alpha = 0.22f),
-            onPrimaryContainer  = Color.White,
-            secondary           = data.accentLight,
-            background          = data.bgDark,
-            onBackground        = GlassDarkOnSurface,
-            surface             = GlassDarkSurface,
-            onSurface           = GlassDarkOnSurface,
-            surfaceVariant      = GlassDarkSurfaceVariant,
-            onSurfaceVariant    = GlassDarkOnSurfaceVar,
-            outline             = GlassDarkOnSurfaceVar.copy(alpha = 0.45f),
-        )
-    } else {
-        lightColorScheme(
-            primary             = primary,
-            onPrimary           = Color.White,
-            primaryContainer    = primary.copy(alpha = 0.14f),
-            onPrimaryContainer  = primary,
-            secondary           = data.accentDark,
-            background          = data.bgLight,
-            onBackground        = GlassLightOnSurface,
-            surface             = GlassLightSurface,
-            onSurface           = GlassLightOnSurface,
-            surfaceVariant      = GlassLightSurfaceVariant,
-            onSurfaceVariant    = GlassLightOnSurfaceVar,
-            outline             = GlassLightOnSurfaceVar.copy(alpha = 0.45f),
-        )
-    }
+    // Both schemes use white text — photo background is always warm-dark
+    val colors = darkColorScheme(
+        primary              = if (dark) WarmAmber else WarmOrange,
+        onPrimary            = AlwaysWhite,
+        primaryContainer     = WarmOrange.copy(alpha = 0.28f),
+        onPrimaryContainer   = AlwaysWhite,
+        secondary            = WarmAmber,
+        onSecondary          = AlwaysWhite,
+        background           = Color(0xFF1A0800),
+        onBackground         = AlwaysWhite,
+        surface              = GlassSurface,
+        onSurface            = AlwaysWhite,
+        surfaceVariant       = GlassSurface.copy(alpha = 0.60f),
+        onSurfaceVariant     = AlwaysWhiteDim,
+        outline              = AlwaysWhiteFaint,
+        error                = Color(0xFFFF6B6B),
+        onError              = AlwaysWhite,
+        inverseSurface       = Color(0xFFF5E6D3),
+        inverseOnSurface     = Color(0xFF1A0800),
+    )
 
-    val neu = if (dark)
-        NeuColors(Color.Black.copy(alpha = 0.55f), Color.White.copy(alpha = 0.08f), true)
-    else
-        NeuColors(Color.Black.copy(alpha = 0.14f), Color.White.copy(alpha = 0.85f), false)
+    val data = themeData(appTheme)
+    val neu  = NeuColors(Color.Black.copy(alpha = 0.55f), Color.White.copy(alpha = 0.08f), dark)
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             val controller = WindowCompat.getInsetsController(window, view)
-            controller.isAppearanceLightStatusBars = !dark
-            controller.isAppearanceLightNavigationBars = !dark
+            // Always light-on-dark status bar icons since background is warm-dark
+            controller.isAppearanceLightStatusBars = false
+            controller.isAppearanceLightNavigationBars = false
         }
     }
 
