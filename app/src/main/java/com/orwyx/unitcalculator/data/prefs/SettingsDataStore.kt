@@ -12,6 +12,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.orwyx.unitcalculator.domain.model.AccentColor
 import com.orwyx.unitcalculator.domain.model.AppSettings
+import com.orwyx.unitcalculator.domain.model.AppTheme
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -28,6 +29,7 @@ class SettingsDataStore(private val context: Context) {
         val ACTIVE_METER_ID = longPreferencesKey("active_meter_id")
         val ACCENT_COLOR = stringPreferencesKey("accent_color")
         val METER_COLORS = stringPreferencesKey("meter_colors")
+        val APP_THEME = stringPreferencesKey("app_theme")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -39,6 +41,7 @@ class SettingsDataStore(private val context: Context) {
             activeMeterId = prefs[Keys.ACTIVE_METER_ID]?.takeIf { it > 0L },
             accentColor = prefs[Keys.ACCENT_COLOR]?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() } ?: AccentColor.BLUE,
             meterColors = decodeMeterColors(prefs[Keys.METER_COLORS] ?: ""),
+            appTheme = prefs[Keys.APP_THEME]?.let { runCatching { AppTheme.valueOf(it) }.getOrNull() } ?: AppTheme.SUNSET,
         )
     }
 
@@ -48,6 +51,7 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setAllowDecimals(allow: Boolean) = context.dataStore.edit { it[Keys.ALLOW_DECIMALS] = allow }.let {}
     suspend fun setActiveMeterId(id: Long?) = context.dataStore.edit { it[Keys.ACTIVE_METER_ID] = (id ?: 0L) }.let {}
     suspend fun setAccentColor(color: AccentColor) = context.dataStore.edit { it[Keys.ACCENT_COLOR] = color.name }.let {}
+    suspend fun setAppTheme(theme: AppTheme) = context.dataStore.edit { it[Keys.APP_THEME] = theme.name }.let {}
 
     suspend fun setMeterColor(meterId: Long, colorIndex: Int) = context.dataStore.edit { prefs ->
         val current = decodeMeterColors(prefs[Keys.METER_COLORS] ?: "").toMutableMap()

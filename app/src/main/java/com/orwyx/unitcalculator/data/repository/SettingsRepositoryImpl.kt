@@ -3,6 +3,7 @@ package com.orwyx.unitcalculator.data.repository
 import com.orwyx.unitcalculator.data.prefs.SettingsDataStore
 import com.orwyx.unitcalculator.domain.model.AccentColor
 import com.orwyx.unitcalculator.domain.model.AppSettings
+import com.orwyx.unitcalculator.domain.model.AppTheme
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 import com.orwyx.unitcalculator.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
@@ -20,5 +21,6 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setAllowDecimals(allow: Boolean) = dataStore.setAllowDecimals(allow)
     override suspend fun setActiveMeterId(id: Long?) = dataStore.setActiveMeterId(id)
     override suspend fun setAccentColor(color: AccentColor) = dataStore.setAccentColor(color)
+    override suspend fun setAppTheme(theme: AppTheme) = dataStore.setAppTheme(theme)
     override suspend fun setMeterColor(meterId: Long, colorIndex: Int) = dataStore.setMeterColor(meterId, colorIndex)
 }

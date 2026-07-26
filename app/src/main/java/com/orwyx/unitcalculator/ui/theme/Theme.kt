@@ -9,46 +9,40 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import androidx.compose.ui.graphics.Color
-import com.orwyx.unitcalculator.domain.model.AccentColor
+import com.orwyx.unitcalculator.domain.model.AppTheme
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 
-private val LightColors = lightColorScheme(
-    primary = Blue500,
-    onPrimary = Color_White,
-    primaryContainer = BlueTint,
-    onPrimaryContainer = Blue700,
-    secondary = Blue400,
-    background = LightBackground,
-    onBackground = LightOnSurface,
-    surface = LightSurface,
-    onSurface = LightOnSurface,
-    surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = LightOnSurfaceVariant,
-    outline = LightOnSurfaceVariant,
+data class AppThemeData(
+    val blob1: Color,
+    val blob2: Color,
+    val blob3: Color,
+    val accentLight: Color,
+    val accentDark: Color,
+    val bgDark: Color,
+    val bgLight: Color,
 )
 
-private val DarkColors = darkColorScheme(
-    primary = Blue400,
-    onPrimary = Color_White,
-    primaryContainer = Blue700,
-    onPrimaryContainer = BlueTint,
-    secondary = Blue500,
-    background = DarkBackground,
-    onBackground = DarkOnSurface,
-    surface = DarkSurface,
-    onSurface = DarkOnSurface,
-    surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = DarkOnSurfaceVariant,
-    outline = DarkOnSurfaceVariant,
-)
+val LocalAppTheme = staticCompositionLocalOf { themeData(AppTheme.SUNSET) }
 
-/** Exposes the neumorphic shadow/highlight pair for the active theme to composables. */
+fun themeData(theme: AppTheme): AppThemeData = when (theme) {
+    AppTheme.SUNSET   -> AppThemeData(Color(0xFFFF6B1A), Color(0xFFFFD166), Color(0xFFFF4081), Color(0xFFE65100), Color(0xFFFFAB40), Color(0xFF180500), Color(0xFFFFF5EC))
+    AppTheme.OCEAN    -> AppThemeData(Color(0xFF0077B6), Color(0xFF00B4D8), Color(0xFF90E0EF), Color(0xFF0097A7), Color(0xFF4DD0E1), Color(0xFF000D1A), Color(0xFFECF8FC))
+    AppTheme.DUSK     -> AppThemeData(Color(0xFF7C3AED), Color(0xFFEC4899), Color(0xFFC4B5FD), Color(0xFF7C4DFF), Color(0xFFB39DDB), Color(0xFF0D0020), Color(0xFFF5F0FF))
+    AppTheme.FOREST   -> AppThemeData(Color(0xFF166534), Color(0xFF4ADE80), Color(0xFFBBF7D0), Color(0xFF00897B), Color(0xFF4DB6AC), Color(0xFF021A0A), Color(0xFFF0FFF4))
+    AppTheme.ROSE     -> AppThemeData(Color(0xFFBE123C), Color(0xFFFB7185), Color(0xFFFECDD3), Color(0xFFD81B60), Color(0xFFF48FB1), Color(0xFF1A000D), Color(0xFFFFF0F5))
+    AppTheme.MIDNIGHT -> AppThemeData(Color(0xFF1E3A5F), Color(0xFF2563EB), Color(0xFF93C5FD), Color(0xFF3A5BFF), Color(0xFF5B7CFA), Color(0xFF020B18), Color(0xFFEEF2FF))
+    AppTheme.LAVA     -> AppThemeData(Color(0xFF7F1D1D), Color(0xFFC2410C), Color(0xFFF97316), Color(0xFFC62828), Color(0xFFFF7043), Color(0xFF1A0000), Color(0xFFFFF3EE))
+    AppTheme.ARCTIC   -> AppThemeData(Color(0xFFBAE6FD), Color(0xFFE0F2FE), Color(0xFF7DD3FC), Color(0xFF37474F), Color(0xFF546E7A), Color(0xFF0A1520), Color(0xFFF0F9FF))
+    AppTheme.GOLDEN   -> AppThemeData(Color(0xFFD97706), Color(0xFFFCD34D), Color(0xFFFEF3C7), Color(0xFFFF6F00), Color(0xFFFFCA28), Color(0xFF1A0F00), Color(0xFFFFFBEC))
+    AppTheme.COSMIC   -> AppThemeData(Color(0xFF4C1D95), Color(0xFFA855F7), Color(0xFFEC4899), Color(0xFF512DA8), Color(0xFFCE93D8), Color(0xFF0D0020), Color(0xFFF5F0FF))
+}
+
 data class NeuColors(
-    val shadow: androidx.compose.ui.graphics.Color,
-    val highlight: androidx.compose.ui.graphics.Color,
+    val shadow: Color,
+    val highlight: Color,
     val isDark: Boolean,
 )
 
@@ -56,45 +50,67 @@ val LocalNeuColors = staticCompositionLocalOf {
     NeuColors(NeuLightShadow, NeuLightHighlight, isDark = false)
 }
 
-private fun accentPair(accent: AccentColor): Pair<Color, Color> = when (accent) {
-    AccentColor.BLUE         -> Blue500 to Blue400
-    AccentColor.NAVY         -> Color(0xFF0D47A1) to Color(0xFF1976D2)
-    AccentColor.INDIGO       -> Color(0xFF3949AB) to Color(0xFF7986CB)
-    AccentColor.DEEP_PURPLE  -> Color(0xFF512DA8) to Color(0xFF9575CD)
-    AccentColor.PURPLE       -> Color(0xFF7C4DFF) to Color(0xFF9575CD)
-    AccentColor.VIOLET       -> Color(0xFF7B1FA2) to Color(0xFFBA68C8)
-    AccentColor.MAGENTA      -> Color(0xFF880E4F) to Color(0xFFF06292)
-    AccentColor.PINK         -> Color(0xFFD81B60) to Color(0xFFF48FB1)
-    AccentColor.ROSE         -> Color(0xFFE91E63) to Color(0xFFF48FB1)
-    AccentColor.RED          -> Color(0xFFC62828) to Color(0xFFEF5350)
-    AccentColor.DEEP_ORANGE  -> Color(0xFFBF360C) to Color(0xFFFF7043)
-    AccentColor.ORANGE       -> Color(0xFFE65100) to Color(0xFFFFAB40)
-    AccentColor.AMBER        -> Color(0xFFFF6F00) to Color(0xFFFFCA28)
-    AccentColor.LIME         -> Color(0xFF558B2F) to Color(0xFF8BC34A)
-    AccentColor.GREEN        -> Color(0xFF00897B) to Color(0xFF4DB6AC)
-    AccentColor.EMERALD      -> Color(0xFF1B5E20) to Color(0xFF4CAF50)
-    AccentColor.TEAL         -> Color(0xFF0097A7) to Color(0xFF4DD0E1)
-    AccentColor.CYAN         -> Color(0xFF006064) to Color(0xFF00BCD4)
-    AccentColor.BROWN        -> Color(0xFF4E342E) to Color(0xFF795548)
-    AccentColor.SLATE        -> Color(0xFF37474F) to Color(0xFF546E7A)
-}
+// Glass surface colors used by M3 for dialogs, sheets, menus
+private val GlassDarkSurface         = Color(0xFF1A1F30)
+private val GlassDarkSurfaceVariant  = Color(0xFF232840)
+private val GlassDarkOnSurface       = Color(0xFFEDF0FF)
+private val GlassDarkOnSurfaceVar    = Color(0xFF9CA3C0)
+
+private val GlassLightSurface        = Color(0xFFF3F6FF)
+private val GlassLightSurfaceVariant = Color(0xFFE3E8F8)
+private val GlassLightOnSurface      = Color(0xFF0F1128)
+private val GlassLightOnSurfaceVar   = Color(0xFF4A5380)
 
 @Composable
 fun UnitCalculatorTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
-    accentColor: AccentColor = AccentColor.BLUE,
+    appTheme: AppTheme = AppTheme.SUNSET,
     content: @Composable () -> Unit,
 ) {
     val dark = when (themeMode) {
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
+        ThemeMode.LIGHT  -> false
+        ThemeMode.DARK   -> true
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
-    val (primary500, primary400) = accentPair(accentColor)
-    val colors = if (dark) DarkColors.copy(primary = primary400, secondary = primary500)
-    else LightColors.copy(primary = primary500, secondary = primary400)
-    val neu = if (dark) NeuColors(NeuDarkShadow, NeuDarkHighlight, true)
-    else NeuColors(NeuLightShadow, NeuLightHighlight, false)
+    val data    = themeData(appTheme)
+    val primary = if (dark) data.accentDark else data.accentLight
+
+    val colors = if (dark) {
+        darkColorScheme(
+            primary             = primary,
+            onPrimary           = Color.White,
+            primaryContainer    = primary.copy(alpha = 0.22f),
+            onPrimaryContainer  = Color.White,
+            secondary           = data.accentLight,
+            background          = data.bgDark,
+            onBackground        = GlassDarkOnSurface,
+            surface             = GlassDarkSurface,
+            onSurface           = GlassDarkOnSurface,
+            surfaceVariant      = GlassDarkSurfaceVariant,
+            onSurfaceVariant    = GlassDarkOnSurfaceVar,
+            outline             = GlassDarkOnSurfaceVar.copy(alpha = 0.45f),
+        )
+    } else {
+        lightColorScheme(
+            primary             = primary,
+            onPrimary           = Color.White,
+            primaryContainer    = primary.copy(alpha = 0.14f),
+            onPrimaryContainer  = primary,
+            secondary           = data.accentDark,
+            background          = data.bgLight,
+            onBackground        = GlassLightOnSurface,
+            surface             = GlassLightSurface,
+            onSurface           = GlassLightOnSurface,
+            surfaceVariant      = GlassLightSurfaceVariant,
+            onSurfaceVariant    = GlassLightOnSurfaceVar,
+            outline             = GlassLightOnSurfaceVar.copy(alpha = 0.45f),
+        )
+    }
+
+    val neu = if (dark)
+        NeuColors(Color.Black.copy(alpha = 0.55f), Color.White.copy(alpha = 0.08f), true)
+    else
+        NeuColors(Color.Black.copy(alpha = 0.14f), Color.White.copy(alpha = 0.85f), false)
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -106,12 +122,15 @@ fun UnitCalculatorTheme(
         }
     }
 
-    CompositionLocalProvider(LocalNeuColors provides neu) {
+    CompositionLocalProvider(
+        LocalNeuColors provides neu,
+        LocalAppTheme provides data,
+    ) {
         MaterialTheme(
             colorScheme = colors,
-            typography = AppTypography,
-            shapes = AppShapes,
-            content = content,
+            typography  = AppTypography,
+            shapes      = AppShapes,
+            content     = content,
         )
     }
 }

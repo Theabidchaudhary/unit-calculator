@@ -8,6 +8,7 @@ import com.orwyx.unitcalculator.backup.BackupManager
 import com.orwyx.unitcalculator.backup.BackupResult
 import com.orwyx.unitcalculator.domain.model.AccentColor
 import com.orwyx.unitcalculator.domain.model.AppSettings
+import com.orwyx.unitcalculator.domain.model.AppTheme
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 import com.orwyx.unitcalculator.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,6 +42,7 @@ class SettingsViewModel @Inject constructor(
     fun setDefaultTarget(target: Double) = viewModelScope.launch { settingsRepository.setDefaultTarget(target) }
     fun setAllowDecimals(allow: Boolean) = viewModelScope.launch { settingsRepository.setAllowDecimals(allow) }
     fun setAccentColor(color: AccentColor) = viewModelScope.launch { settingsRepository.setAccentColor(color) }
+    fun setAppTheme(theme: AppTheme) = viewModelScope.launch { settingsRepository.setAppTheme(theme) }
 
     fun consumeMessage() { _message.value = null }
 

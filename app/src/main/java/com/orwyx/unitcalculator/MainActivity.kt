@@ -4,15 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.orwyx.unitcalculator.ui.RootViewModel
 import com.orwyx.unitcalculator.ui.navigation.UnitCalculatorNavGraph
+import com.orwyx.unitcalculator.ui.theme.AppBackground
+import com.orwyx.unitcalculator.ui.theme.LocalAppTheme
+import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
 import com.orwyx.unitcalculator.ui.theme.UnitCalculatorTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -24,13 +27,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             val rootViewModel: RootViewModel = hiltViewModel()
             val themeMode by rootViewModel.themeMode.collectAsStateWithLifecycle()
-            val accentColor by rootViewModel.accentColor.collectAsStateWithLifecycle()
+            val appTheme  by rootViewModel.appTheme.collectAsStateWithLifecycle()
 
-            UnitCalculatorTheme(themeMode = themeMode, accentColor = accentColor) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
+            UnitCalculatorTheme(themeMode = themeMode, appTheme = appTheme) {
+                val data   = LocalAppTheme.current
+                val isDark = LocalNeuColors.current.isDark
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(if (isDark) data.bgDark else data.bgLight),
                 ) {
+                    AppBackground()
                     UnitCalculatorNavGraph()
                 }
             }

@@ -8,9 +8,23 @@ data class AppSettings(
     val activeMeterId: Long? = null,
     val accentColor: AccentColor = AccentColor.BLUE,
     val meterColors: Map<Long, Int> = emptyMap(), // meterId -> pickerColors index
+    val appTheme: AppTheme = AppTheme.SUNSET,
 )
 
 enum class ThemeMode { LIGHT, DARK, SYSTEM }
+
+enum class AppTheme(val displayName: String) {
+    SUNSET("Sunset"),
+    OCEAN("Ocean"),
+    DUSK("Dusk"),
+    FOREST("Forest"),
+    ROSE("Rose"),
+    MIDNIGHT("Midnight"),
+    LAVA("Lava"),
+    ARCTIC("Arctic"),
+    GOLDEN("Golden"),
+    COSMIC("Cosmic"),
+}
 
 enum class AccentColor(val displayName: String) {
     BLUE("Blue"),

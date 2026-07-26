@@ -32,10 +32,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
@@ -47,35 +47,51 @@ fun GlassBottomNav(
     onTabSelected: (BottomTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val surface = MaterialTheme.colorScheme.surface
-    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
-    val onSurface = MaterialTheme.colorScheme.onSurface
     val primary = MaterialTheme.colorScheme.primary
-    val neu = LocalNeuColors.current
-    val sheen = lerp(surface, surfaceVariant, 0.45f)
-    val glossyBrush = Brush.verticalGradient(
-        0.0f to sheen.copy(alpha = 0.98f),
-        0.55f to surface.copy(alpha = 0.98f),
-        1.0f to surface.copy(alpha = 1.0f),
-    )
-    val tabs = BottomTab.entries
+    val isDark  = LocalNeuColors.current.isDark
+    val tabs    = BottomTab.entries
     val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceIn(0, tabs.lastIndex)
+
+    val barGlass    = if (isDark) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.62f)
+    val barSheen    = if (isDark) 0.10f else 0.28f
+    val borderAlpha = if (isDark) 0.18f else 0.68f
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.50f else 0.18f)
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 14.dp)
-            .shadow(elevation = 18.dp, shape = MaterialTheme.shapes.extraLarge, ambientColor = neu.shadow.copy(alpha = 0.55f), spotColor = neu.shadow.copy(alpha = 0.65f))
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .shadow(
+                elevation     = 20.dp,
+                shape         = MaterialTheme.shapes.extraLarge,
+                ambientColor  = shadowColor,
+                spotColor     = primary.copy(alpha = 0.28f),
+            )
             .clip(MaterialTheme.shapes.extraLarge)
-            .background(glossyBrush, shape = MaterialTheme.shapes.extraLarge)
             .drawBehind {
-                drawRect(brush = Brush.verticalGradient(colors = listOf(Color.White.copy(alpha = if (neu.isDark) 0.06f else 0.18f), Color.Transparent), startY = 0f, endY = size.height * 0.45f))
-                val border = onSurface.copy(alpha = if (neu.isDark) 0.10f else 0.06f)
-                drawRect(color = border, topLeft = Offset(0f, 0f), size = Size(size.width, 1f))
-                drawRect(color = border, topLeft = Offset(0f, size.height - 1f), size = Size(size.width, 1f))
-                drawRect(color = border, topLeft = Offset(0f, 0f), size = Size(1f, size.height))
-                drawRect(color = border, topLeft = Offset(size.width - 1f, 0f), size = Size(1f, size.height))
+                val cr = CornerRadius(50.dp.toPx())
+                drawRoundRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            barGlass.copy(alpha = (barGlass.alpha + 0.10f).coerceAtMost(1f)),
+                            barGlass,
+                        ),
+                    ),
+                    cornerRadius = cr,
+                )
+                drawRoundRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color.White.copy(alpha = barSheen), Color.Transparent),
+                        startY = 0f, endY = size.height * 0.5f,
+                    ),
+                    cornerRadius = cr,
+                )
+                drawRoundRect(
+                    color        = Color.White.copy(alpha = borderAlpha),
+                    cornerRadius = cr,
+                    style        = Stroke(width = 1.dp.toPx()),
+                )
             }
             .padding(8.dp)
             .height(56.dp),
@@ -83,29 +99,39 @@ fun GlassBottomNav(
     ) {
         val slotWidth = maxWidth / tabs.size
         val indicatorOffset by animateDpAsState(
-            targetValue = slotWidth * selectedIndex,
+            targetValue   = slotWidth * selectedIndex,
             animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
-            label = "navIndicatorOffset",
+            label         = "navIndicatorOffset",
         )
 
+        // Selected pill with top-to-bottom accent gradient
         Box(
             modifier = Modifier
                 .offset(x = indicatorOffset)
                 .width(slotWidth)
                 .fillMaxHeight()
                 .padding(4.dp)
-                .shadow(elevation = 8.dp, shape = CircleShape, ambientColor = primary.copy(alpha = 0.4f), spotColor = primary.copy(alpha = 0.5f))
+                .shadow(10.dp, CircleShape, ambientColor = primary.copy(alpha = 0.45f), spotColor = primary.copy(alpha = 0.55f))
                 .clip(CircleShape)
-                .background(primary),
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(primary.copy(alpha = 0.82f), primary),
+                    ),
+                ),
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier              = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment     = Alignment.CenterVertically,
         ) {
             tabs.forEach { tab ->
-                NavTab(tab = tab, selected = currentRoute == tab.route, onClick = { onTabSelected(tab) }, modifier = Modifier.weight(1f))
+                NavTab(
+                    tab      = tab,
+                    selected = currentRoute == tab.route,
+                    onClick  = { onTabSelected(tab) },
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
@@ -113,7 +139,11 @@ fun GlassBottomNav(
 
 @Composable
 private fun NavTab(tab: BottomTab, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val content by animateColorAsState(if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, label = "tabContent")
+    val content by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.onPrimary
+        else MaterialTheme.colorScheme.onSurfaceVariant,
+        label = "tabContent",
+    )
     val interactionSource = remember { MutableInteractionSource() }
     Row(
         modifier = modifier
@@ -121,7 +151,7 @@ private fun NavTab(tab: BottomTab, selected: Boolean, onClick: () -> Unit, modif
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment     = Alignment.CenterVertically,
     ) {
         Icon(tab.icon, contentDescription = tab.label, tint = content, modifier = Modifier.size(22.dp))
         if (selected) {
@@ -129,9 +159,4 @@ private fun NavTab(tab: BottomTab, selected: Boolean, onClick: () -> Unit, modif
             Text(tab.label, color = content, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
         }
     }
-}
-
-private fun lerp(a: Color, b: Color, t: Float): Color {
-    val tt = t.coerceIn(0f, 1f)
-    return Color(red = a.red + (b.red - a.red) * tt, green = a.green + (b.green - a.green) * tt, blue = a.blue + (b.blue - a.blue) * tt, alpha = a.alpha + (b.alpha - a.alpha) * tt)
 }

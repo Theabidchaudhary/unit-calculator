@@ -2,6 +2,7 @@ package com.orwyx.unitcalculator.domain.repository
 
 import com.orwyx.unitcalculator.domain.model.AccentColor
 import com.orwyx.unitcalculator.domain.model.AppSettings
+import com.orwyx.unitcalculator.domain.model.AppTheme
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 
@@ -14,5 +15,6 @@ interface SettingsRepository {
     suspend fun setAllowDecimals(allow: Boolean)
     suspend fun setActiveMeterId(id: Long?)
     suspend fun setAccentColor(color: AccentColor)
+    suspend fun setAppTheme(theme: AppTheme)
     suspend fun setMeterColor(meterId: Long, colorIndex: Int)
 }
