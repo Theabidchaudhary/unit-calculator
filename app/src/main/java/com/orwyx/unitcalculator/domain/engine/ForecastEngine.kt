@@ -10,8 +10,8 @@ import com.orwyx.unitcalculator.domain.model.Forecast
 class ForecastEngine {
 
     fun forecast(totalConsumed: Double, totalTarget: Double, cycle: BillingCycle): Forecast {
-        val avgDaily = totalConsumed / cycle.elapsedDays
-        val projected = avgDaily * cycle.totalDays
+        val avgDaily = if (cycle.elapsedDays > 0) totalConsumed / cycle.elapsedDays else 0.0
+        val projected = totalConsumed + avgDaily * cycle.remainingDays
         return Forecast(
             avgDailyUsage = avgDaily,
             projectedMonthEnd = projected,

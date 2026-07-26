@@ -70,9 +70,8 @@ fun MeterDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { meter?.let { onEdit(it.id) } }, enabled = meter?.closedDate == null) {
-                        Icon(Icons.Rounded.Edit, contentDescription = "Edit",
-                            tint = if (meter?.closedDate == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f))
+                    IconButton(onClick = { showDelete = true }) {
+                        Icon(Icons.Rounded.Delete, contentDescription = "Delete")
                     }
                 },
             )
@@ -136,9 +135,9 @@ fun MeterDetailScreen(
                         Spacer(Modifier.height(0.dp))
                         Text(" Reset month")
                     }
-                    OutlinedButton(onClick = { showDelete = true }, modifier = Modifier.weight(1f).height(50.dp), shape = MaterialTheme.shapes.large) {
-                        Icon(Icons.Rounded.Delete, contentDescription = null)
-                        Text(" Delete")
+                    OutlinedButton(onClick = { meter?.let { onEdit(it.id) } }, enabled = meter?.closedDate == null, modifier = Modifier.weight(1f).height(50.dp), shape = MaterialTheme.shapes.large) {
+                        Icon(Icons.Rounded.Edit, contentDescription = null)
+                        Text(" Edit")
                     }
                 }
             }

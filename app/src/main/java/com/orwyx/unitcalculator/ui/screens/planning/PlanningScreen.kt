@@ -69,10 +69,20 @@ fun PlanningScreen(
     val fmt = DateTimeFormatter.ofPattern("d MMM")
     var selectedDay by remember { mutableStateOf<DayPlan?>(null) }
     val meterColorMap = remember(state.meterWindows, state.meterColors) {
-        state.meterWindows.mapIndexed { index, window ->
+        val usedIndices = state.meterColors.values.toSet()
+        var autoCounter = 0
+        state.meterWindows.map { window ->
             val userColorIdx = state.meterColors[window.meter.id]
-            window.meter.id to if (userColorIdx != null) MeterPalette.colorForIndex(userColorIdx)
-            else MeterPalette.colorFor(index)
+            val color = if (userColorIdx != null) {
+                MeterPalette.colorForIndex(userColorIdx)
+            } else {
+                // skip indices already claimed by explicit selections
+                while (usedIndices.contains(autoCounter)) autoCounter++
+                val c = MeterPalette.colorFor(autoCounter)
+                autoCounter++
+                c
+            }
+            window.meter.id to color
         }.toMap()
     }
 
@@ -176,7 +186,10 @@ fun PlanningScreen(
             item { SectionHeader("Meters in this cycle") }
             state.meterPhases.forEach { phase ->
                 item(key = "phase_${phase.meter.id}") {
-                    MeterPhaseCard(phase = phase, fmt = fmt, cycleStart = state.cycleStart)
+                    MeterPhaseCard(
+                        phase = phase, fmt = fmt, cycleStart = state.cycleStart,
+                        meterColor = meterColorMap[phase.meter.id],
+                    )
                 }
             }
         }
@@ -237,8 +250,9 @@ private fun MeterPhaseCard(
     phase: MeterPhase,
     fmt: DateTimeFormatter,
     cycleStart: java.time.LocalDate,
+    meterColor: Color? = null,
 ) {
-    val accent = meterAccentColor(phase.sequenceIndex)
+    val accent = meterColor ?: meterAccentColor(phase.sequenceIndex)
     NeumorphicCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Box(
@@ -322,26 +336,26 @@ private fun DayDetail(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Left: bullet + meter name big
+                // Left: bullet + meter name
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(10.dp).clip(CircleShape).background(meterColor))
-                    Spacer(Modifier.width(8.dp))
+                    Box(Modifier.size(8.dp).clip(CircleShape).background(meterColor))
+                    Spacer(Modifier.width(7.dp))
                     Text(
                         window.meter.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
                         color = meterColor,
                     )
                 }
-                // Right: 4 progressively larger dots + last 4 ref digits
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    listOf(4.dp, 6.dp, 8.dp, 10.dp).forEach { dotSize ->
+                // Right: 5 progressively larger dots + last 4 ref digits
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    listOf(3.dp, 4.dp, 6.dp, 7.dp, 9.dp).forEach { dotSize ->
                         Box(Modifier.size(dotSize).clip(CircleShape).background(meterColor))
                     }
                     Spacer(Modifier.width(4.dp))
                     Text(
                         day.meterRefLast4,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = meterColor,
                     )
@@ -352,8 +366,8 @@ private fun DayDetail(
 
         if (window != null) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                PlanStat("Expected reading", Formatters.units(day.expectedMeterReading))
                 PlanStat("Current reading", Formatters.units(actualReading))
+                PlanStat("Expected reading", Formatters.units(day.expectedMeterReading))
             }
         }
     }

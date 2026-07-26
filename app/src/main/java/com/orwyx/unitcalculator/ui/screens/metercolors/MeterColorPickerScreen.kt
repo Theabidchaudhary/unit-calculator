@@ -75,26 +75,31 @@ fun MeterColorPickerScreen(
                 Spacer(Modifier.height(4.dp))
             }
             items(state.entries) { entry ->
+                val allUsedIndices = state.entries.mapNotNull { it.colorIndex }.toSet()
+                val otherUsedIndices = allUsedIndices - (entry.colorIndex?.let { setOf(it) } ?: emptySet())
                 NeumorphicCard(modifier = Modifier.fillMaxWidth()) {
                     Column {
                         Text(entry.meter.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         Spacer(Modifier.height(10.dp))
+                        // 7 columns × 3 rows = 21 swatches
                         FlowRow(
+                            maxItemsInEachRow = 7,
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             MeterPalette.pickerColors.forEachIndexed { index, color ->
                                 val isSelected = entry.colorIndex == index
+                                val takenByOther = otherUsedIndices.contains(index)
                                 Box(
                                     modifier = Modifier
                                         .size(32.dp)
                                         .clip(CircleShape)
-                                        .background(color)
+                                        .background(if (takenByOther) color.copy(alpha = 0.25f) else color)
                                         .then(
                                             if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
                                             else Modifier
                                         )
-                                        .clickable { viewModel.setColor(entry.meter.id, index) },
+                                        .then(if (!takenByOther) Modifier.clickable { viewModel.setColor(entry.meter.id, index) } else Modifier),
                                 )
                             }
                         }
