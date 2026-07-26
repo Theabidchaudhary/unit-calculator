@@ -57,12 +57,26 @@ val LocalNeuColors = staticCompositionLocalOf {
 }
 
 private fun accentPair(accent: AccentColor): Pair<Color, Color> = when (accent) {
-    AccentColor.BLUE   -> Blue500 to Blue400
-    AccentColor.PURPLE -> Color(0xFF7C4DFF) to Color(0xFF9575CD)
-    AccentColor.TEAL   -> Color(0xFF0097A7) to Color(0xFF4DD0E1)
-    AccentColor.GREEN  -> Color(0xFF00897B) to Color(0xFF4DB6AC)
-    AccentColor.ORANGE -> Color(0xFFE65100) to Color(0xFFFFAB40)
-    AccentColor.PINK   -> Color(0xFFD81B60) to Color(0xFFF48FB1)
+    AccentColor.BLUE         -> Blue500 to Blue400
+    AccentColor.NAVY         -> Color(0xFF0D47A1) to Color(0xFF1976D2)
+    AccentColor.INDIGO       -> Color(0xFF3949AB) to Color(0xFF7986CB)
+    AccentColor.DEEP_PURPLE  -> Color(0xFF512DA8) to Color(0xFF9575CD)
+    AccentColor.PURPLE       -> Color(0xFF7C4DFF) to Color(0xFF9575CD)
+    AccentColor.VIOLET       -> Color(0xFF7B1FA2) to Color(0xFFBA68C8)
+    AccentColor.MAGENTA      -> Color(0xFF880E4F) to Color(0xFFF06292)
+    AccentColor.PINK         -> Color(0xFFD81B60) to Color(0xFFF48FB1)
+    AccentColor.ROSE         -> Color(0xFFE91E63) to Color(0xFFF48FB1)
+    AccentColor.RED          -> Color(0xFFC62828) to Color(0xFFEF5350)
+    AccentColor.DEEP_ORANGE  -> Color(0xFFBF360C) to Color(0xFFFF7043)
+    AccentColor.ORANGE       -> Color(0xFFE65100) to Color(0xFFFFAB40)
+    AccentColor.AMBER        -> Color(0xFFFF6F00) to Color(0xFFFFCA28)
+    AccentColor.LIME         -> Color(0xFF558B2F) to Color(0xFF8BC34A)
+    AccentColor.GREEN        -> Color(0xFF00897B) to Color(0xFF4DB6AC)
+    AccentColor.EMERALD      -> Color(0xFF1B5E20) to Color(0xFF4CAF50)
+    AccentColor.TEAL         -> Color(0xFF0097A7) to Color(0xFF4DD0E1)
+    AccentColor.CYAN         -> Color(0xFF006064) to Color(0xFF00BCD4)
+    AccentColor.BROWN        -> Color(0xFF4E342E) to Color(0xFF795548)
+    AccentColor.SLATE        -> Color(0xFF37474F) to Color(0xFF546E7A)
 }
 
 @Composable

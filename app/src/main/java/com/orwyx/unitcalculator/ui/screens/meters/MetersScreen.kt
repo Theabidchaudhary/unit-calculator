@@ -63,6 +63,7 @@ import com.orwyx.unitcalculator.ui.components.EmptyState
 import com.orwyx.unitcalculator.ui.components.MeterCard
 import com.orwyx.unitcalculator.ui.components.SectionHeader
 import com.orwyx.unitcalculator.ui.components.SummaryCard
+import com.orwyx.unitcalculator.ui.theme.MeterPalette
 import com.orwyx.unitcalculator.ui.theme.StatusDeepGreen
 import com.orwyx.unitcalculator.ui.theme.StatusOrange
 import com.orwyx.unitcalculator.ui.theme.StatusRed
@@ -83,6 +84,23 @@ fun MetersScreen(
     var meterToReset by remember { mutableStateOf<Meter?>(null) }
     var showResetAll by remember { mutableStateOf(false) }
     val itemHeights = remember { mutableStateMapOf<Long, Int>() }
+
+    val meterColorMap = remember(state.meters, state.settings.meterColors) {
+        val usedIndices = state.settings.meterColors.values.toSet()
+        var autoCounter = 0
+        state.meters.map { meter ->
+            val userColorIdx = state.settings.meterColors[meter.id]
+            val color = if (userColorIdx != null) {
+                MeterPalette.colorForIndex(userColorIdx)
+            } else {
+                while (usedIndices.contains(autoCounter)) autoCounter++
+                val c = MeterPalette.colorFor(autoCounter)
+                autoCounter++
+                c
+            }
+            meter.id to color
+        }.toMap()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -145,9 +163,10 @@ fun MetersScreen(
                     sequenceNumber = seqNum,
                     phase = phase,
                     remainingDays = state.remainingDays,
-                    allowDecimals = state.settings.allowDecimals,
+                    allowDecimals = true,
                     isActive = state.settings.activeMeterId == meter.id,
                     isClosed = meter.closedDate != null,
+                    meterColor = meterColorMap[meter.id],
                     modifier = Modifier
                         .animateItem()
                         .onGloballyPositioned { coords -> itemHeights[meter.id] = coords.size.height }

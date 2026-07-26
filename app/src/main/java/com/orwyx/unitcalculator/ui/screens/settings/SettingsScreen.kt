@@ -5,12 +5,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +22,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -27,36 +31,39 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.orwyx.unitcalculator.core.util.Formatters
 import com.orwyx.unitcalculator.domain.model.AccentColor
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 import com.orwyx.unitcalculator.ui.components.NeumorphicCard
 import com.orwyx.unitcalculator.ui.components.SectionHeader
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
@@ -65,6 +72,7 @@ fun SettingsScreen(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val focusManager = LocalFocusManager.current
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
@@ -124,7 +132,6 @@ fun SettingsScreen(
                                 selected = settings.themeMode == mode,
                                 onClick = { viewModel.setTheme(mode) },
                             )
-                            Spacer(Modifier.height(0.dp))
                             Text(mode.name.lowercase().replaceFirstChar { it.uppercase() })
                         }
                     }
@@ -141,9 +148,11 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(12.dp))
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    // 4-column grid of accent swatches
+                    FlowRow(
+                        maxItemsInEachRow = 5,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         AccentColor.entries.forEach { accent ->
                             val selected = settings.accentColor == accent
@@ -183,17 +192,43 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(10.dp))
-                    Row(
-                        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        (1..31).forEach { day ->
-                            FilterChip(
-                                selected = settings.readingDate == day,
-                                onClick = { viewModel.setReadingDate(day) },
-                                label = { Text(day.toString()) },
-                            )
+                    Spacer(Modifier.height(12.dp))
+                    // 7-column calendar grid for days 1–31
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        (0..4).forEach { rowIdx ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                (1..7).forEach { colIdx ->
+                                    val day = rowIdx * 7 + colIdx
+                                    if (day <= 31) {
+                                        val selected = settings.readingDate == day
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .aspectRatio(1f)
+                                                .clip(CircleShape)
+                                                .background(
+                                                    if (selected) MaterialTheme.colorScheme.primary
+                                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                                )
+                                                .clickable { viewModel.setReadingDate(day) },
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Text(
+                                                day.toString(),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (selected) MaterialTheme.colorScheme.onPrimary
+                                                else MaterialTheme.colorScheme.onSurface,
+                                            )
+                                        }
+                                    } else {
+                                        Spacer(Modifier.weight(1f).aspectRatio(1f))
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -203,42 +238,39 @@ fun SettingsScreen(
             NeumorphicCard(modifier = Modifier.fillMaxWidth()) {
                 Column {
                     Text(
-                        "Default target: ${Formatters.units(settings.defaultTarget)} units",
+                        "Default target",
                         fontWeight = FontWeight.SemiBold,
                         style = MaterialTheme.typography.titleMedium,
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Row(
-                        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        (80..1000 step 20).map { it.toDouble() }.forEach { target ->
-                            FilterChip(
-                                selected = settings.defaultTarget == target,
-                                onClick = { viewModel.setDefaultTarget(target) },
-                                label = { Text(Formatters.units(target)) },
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text("Allow decimals", fontWeight = FontWeight.SemiBold)
-                            Text(
-                                "Enter fractional readings like 54.3",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Switch(
-                            checked = settings.allowDecimals,
-                            onCheckedChange = { viewModel.setAllowDecimals(it) },
+                    Text(
+                        "Used as the starting target for new meters.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    var rawTarget by remember(settings.defaultTarget) {
+                        mutableStateOf(
+                            if (settings.defaultTarget % 1.0 == 0.0) settings.defaultTarget.toLong().toString()
+                            else settings.defaultTarget.toString()
                         )
                     }
+                    OutlinedTextField(
+                        value = rawTarget,
+                        onValueChange = { rawTarget = it },
+                        placeholder = { Text("180") },
+                        suffix = { Text("units", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = KeyboardActions(onDone = {
+                            rawTarget.toDoubleOrNull()?.let { viewModel.setDefaultTarget(it) }
+                            focusManager.clearFocus()
+                        }),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium,
+                    )
                 }
             }
 
@@ -280,13 +312,27 @@ fun SettingsScreen(
     }
 }
 
-private fun accentColorValue(accent: AccentColor): Color = when (accent) {
-    AccentColor.BLUE   -> Color(0xFF3A5BFF)
-    AccentColor.PURPLE -> Color(0xFF7C4DFF)
-    AccentColor.TEAL   -> Color(0xFF0097A7)
-    AccentColor.GREEN  -> Color(0xFF00897B)
-    AccentColor.ORANGE -> Color(0xFFE65100)
-    AccentColor.PINK   -> Color(0xFFD81B60)
+fun accentColorValue(accent: AccentColor): Color = when (accent) {
+    AccentColor.BLUE         -> Color(0xFF3A5BFF)
+    AccentColor.NAVY         -> Color(0xFF0D47A1)
+    AccentColor.INDIGO       -> Color(0xFF3949AB)
+    AccentColor.DEEP_PURPLE  -> Color(0xFF512DA8)
+    AccentColor.PURPLE       -> Color(0xFF7C4DFF)
+    AccentColor.VIOLET       -> Color(0xFF7B1FA2)
+    AccentColor.MAGENTA      -> Color(0xFF880E4F)
+    AccentColor.PINK         -> Color(0xFFD81B60)
+    AccentColor.ROSE         -> Color(0xFFE91E63)
+    AccentColor.RED          -> Color(0xFFC62828)
+    AccentColor.DEEP_ORANGE  -> Color(0xFFBF360C)
+    AccentColor.ORANGE       -> Color(0xFFE65100)
+    AccentColor.AMBER        -> Color(0xFFFF6F00)
+    AccentColor.LIME         -> Color(0xFF558B2F)
+    AccentColor.GREEN        -> Color(0xFF00897B)
+    AccentColor.EMERALD      -> Color(0xFF1B5E20)
+    AccentColor.TEAL         -> Color(0xFF0097A7)
+    AccentColor.CYAN         -> Color(0xFF006064)
+    AccentColor.BROWN        -> Color(0xFF4E342E)
+    AccentColor.SLATE        -> Color(0xFF37474F)
 }
 
 @Composable
@@ -304,8 +350,8 @@ private fun ActionRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
-        Spacer(Modifier.height(0.dp))
-        Column(Modifier.weight(1f).padding(start = 14.dp)) {
+        Spacer(Modifier.size(14.dp))
+        Column(Modifier.weight(1f)) {
             Text(title, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

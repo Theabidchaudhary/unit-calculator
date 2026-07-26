@@ -66,7 +66,7 @@ fun GlassBottomNav(
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 14.dp)
-            .shadow(elevation = 12.dp, shape = MaterialTheme.shapes.extraLarge, ambientColor = neu.shadow.copy(alpha = 0.45f), spotColor = neu.shadow.copy(alpha = 0.55f))
+            .shadow(elevation = 18.dp, shape = MaterialTheme.shapes.extraLarge, ambientColor = neu.shadow.copy(alpha = 0.55f), spotColor = neu.shadow.copy(alpha = 0.65f))
             .clip(MaterialTheme.shapes.extraLarge)
             .background(glossyBrush, shape = MaterialTheme.shapes.extraLarge)
             .drawBehind {
@@ -94,6 +94,7 @@ fun GlassBottomNav(
                 .width(slotWidth)
                 .fillMaxHeight()
                 .padding(4.dp)
+                .shadow(elevation = 8.dp, shape = CircleShape, ambientColor = primary.copy(alpha = 0.4f), spotColor = primary.copy(alpha = 0.5f))
                 .clip(CircleShape)
                 .background(primary),
         )

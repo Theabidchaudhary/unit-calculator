@@ -10,6 +10,7 @@ import com.orwyx.unitcalculator.domain.model.MeterInputErrors
 import com.orwyx.unitcalculator.domain.repository.MeterRepository
 import com.orwyx.unitcalculator.domain.repository.SettingsRepository
 import com.orwyx.unitcalculator.ui.navigation.Routes
+import com.orwyx.unitcalculator.ui.theme.MeterPalette
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -88,7 +89,15 @@ class MeterEditViewModel @Inject constructor(
             } else {
                 effectiveInput.toMeter()
             }
-            meterRepository.upsert(toSave)
+            val savedId = meterRepository.upsert(toSave)
+            if (!current.isEditing) {
+                val freshSettings = settingsRepository.getSettingsOnce()
+                val usedIndices = freshSettings.meterColors.values.toSet()
+                val available = (0 until MeterPalette.pickerColors.size).filter { it !in usedIndices }
+                val randomIdx = if (available.isNotEmpty()) available.random()
+                else (0 until MeterPalette.pickerColors.size).random()
+                settingsRepository.setMeterColor(savedId, randomIdx)
+            }
             _state.value = current.copy(saved = true)
         }
     }

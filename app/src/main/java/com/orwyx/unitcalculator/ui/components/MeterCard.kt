@@ -81,6 +81,7 @@ fun MeterCard(
     allowDecimals: Boolean,
     isActive: Boolean,
     isClosed: Boolean,
+    meterColor: androidx.compose.ui.graphics.Color? = null,
     modifier: Modifier = Modifier,
     reorderMode: Boolean = false,
     onClick: () -> Unit,
@@ -101,9 +102,13 @@ fun MeterCard(
         label = "wiggle",
     )
 
+    val cardBg = meterColor?.copy(alpha = 0.13f)
+    val nameColor = meterColor ?: MaterialTheme.colorScheme.onSurface
+
     Box(modifier = modifier.rotate(if (reorderMode) wiggleRotation else 0f)) {
         NeumorphicCard(
             modifier = Modifier.fillMaxWidth(),
+            backgroundColor = cardBg,
             onClick = if (reorderMode) ({}) else onClick,
         ) {
             Column {
@@ -112,13 +117,20 @@ fun MeterCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(Modifier.weight(1f)) {
+                    Column(Modifier.weight(1f).padding(end = 8.dp)) {
                         Text(
                             "Meter $sequenceNumber",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Text(meter.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(
+                            meter.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = nameColor,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
                     }
                     StatusBadge(meter.status)
                     Spacer(Modifier.size(8.dp))
@@ -394,8 +406,13 @@ private fun SafeBudgetChip(meter: Meter, phase: MeterPhase?, remainingDays: Int,
         else -> "${Formatters.units(remaining)} units left"
     }
     Text(
-        text = text, style = MaterialTheme.typography.labelLarge, color = color,
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = color,
+        maxLines = 1,
+        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
         modifier = Modifier
+            .fillMaxWidth()
             .clip(MaterialTheme.shapes.small)
             .background(color.copy(alpha = 0.12f))
             .padding(horizontal = 12.dp, vertical = 7.dp),
