@@ -3,11 +3,13 @@ package com.orwyx.unitcalculator.ui.screens.settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -25,6 +27,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,12 +60,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.orwyx.unitcalculator.domain.model.AccentColor
 import com.orwyx.unitcalculator.domain.model.ThemeMode
 import com.orwyx.unitcalculator.ui.components.NeumorphicCard
 import com.orwyx.unitcalculator.ui.components.SectionHeader
-import com.orwyx.unitcalculator.ui.components.accentGradientOverlay
 import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
-import com.orwyx.unitcalculator.ui.theme.WarmAccent
 import com.orwyx.unitcalculator.ui.theme.glassBar
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -148,16 +150,47 @@ fun SettingsScreen(
                 }
             }
 
-            SectionHeader("Visual theme")
+            SectionHeader("Accent colour")
             NeumorphicCard(modifier = Modifier.fillMaxWidth()) {
                 Column {
-                    Text("Background & Accent", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(4.dp))
+                    Text("App colour", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Warm Room — more themes coming soon.",
+                        "Changes the main colour and background gradient used throughout the app.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Spacer(Modifier.height(12.dp))
+                    FlowRow(
+                        maxItemsInEachRow = 5,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        AccentColor.entries.forEach { accent ->
+                            val selected = settings.accentColor == accent
+                            val accentHue = accentColorValue(accent)
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(accentHue)
+                                    .then(
+                                        if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                                        else Modifier
+                                    )
+                                    .clickable { viewModel.setAccentColor(accent) },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (selected) {
+                                    Icon(
+                                        Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -171,31 +204,25 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(12.dp))
+                    // 4-column grid: 8 rows × 4 cols = 32 slots, only 1 empty at the end
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        (0..4).forEach { rowIdx ->
+                        (0..7).forEach { rowIdx ->
                             Row(
                                 modifier              = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                (1..7).forEach { colIdx ->
-                                    val day = rowIdx * 7 + colIdx
+                                (1..4).forEach { colIdx ->
+                                    val day = rowIdx * 4 + colIdx
                                     if (day <= 31) {
                                         val selected = settings.readingDate == day
-                                        val solidBg = when {
-                                            selected -> if (isDark) Color(0xFF2D2D2D) else Color.White
-                                            else -> Color.White.copy(alpha = if (isDark) 0.10f else 0.18f)
-                                        }
                                         Box(
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .aspectRatio(1f)
-                                                .clip(CircleShape)
-                                                .background(solidBg)
-                                                .then(
-                                                    if (selected) Modifier.accentGradientOverlay(
-                                                        accent = WarmAccent,
-                                                        cornerRadius = 50.dp,
-                                                    ) else Modifier
+                                                .aspectRatio(1.4f)
+                                                .clip(MaterialTheme.shapes.small)
+                                                .background(
+                                                    if (selected) MaterialTheme.colorScheme.primary
+                                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
                                                 )
                                                 .clickable { viewModel.setReadingDate(day) },
                                             contentAlignment = Alignment.Center,
@@ -204,11 +231,12 @@ fun SettingsScreen(
                                                 day.toString(),
                                                 style      = MaterialTheme.typography.labelMedium,
                                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                                color      = Color.White,
+                                                color      = if (selected) MaterialTheme.colorScheme.onPrimary
+                                                             else MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
                                         }
                                     } else {
-                                        Spacer(Modifier.weight(1f).aspectRatio(1f))
+                                        Spacer(Modifier.weight(1f).aspectRatio(1.4f))
                                     }
                                 }
                             }
@@ -288,6 +316,28 @@ fun SettingsScreen(
     }
 }
 
+private fun accentColorValue(accent: AccentColor): Color = when (accent) {
+    AccentColor.BLUE         -> Color(0xFF3A5BFF)
+    AccentColor.NAVY         -> Color(0xFF0D47A1)
+    AccentColor.INDIGO       -> Color(0xFF3949AB)
+    AccentColor.DEEP_PURPLE  -> Color(0xFF512DA8)
+    AccentColor.PURPLE       -> Color(0xFF7C4DFF)
+    AccentColor.VIOLET       -> Color(0xFF7B1FA2)
+    AccentColor.MAGENTA      -> Color(0xFF880E4F)
+    AccentColor.PINK         -> Color(0xFFD81B60)
+    AccentColor.ROSE         -> Color(0xFFE91E63)
+    AccentColor.RED          -> Color(0xFFC62828)
+    AccentColor.DEEP_ORANGE  -> Color(0xFFBF360C)
+    AccentColor.ORANGE       -> Color(0xFFE65100)
+    AccentColor.AMBER        -> Color(0xFFFF6F00)
+    AccentColor.LIME         -> Color(0xFF558B2F)
+    AccentColor.GREEN        -> Color(0xFF00897B)
+    AccentColor.EMERALD      -> Color(0xFF1B5E20)
+    AccentColor.TEAL         -> Color(0xFF0097A7)
+    AccentColor.CYAN         -> Color(0xFF006064)
+    AccentColor.BROWN        -> Color(0xFF4E342E)
+    AccentColor.SLATE        -> Color(0xFF37474F)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -7,8 +7,9 @@ data class AppSettings(
     val allowDecimals: Boolean = true,
     val activeMeterId: Long? = null,
     val accentColor: AccentColor = AccentColor.BLUE,
-    val meterColors: Map<Long, Int> = emptyMap(), // meterId -> pickerColors index
+    val meterColors: Map<Long, Int> = emptyMap(),
     val appTheme: AppTheme = AppTheme.SUNSET,
+    val cycleResetDay: Long = 0L, // epoch day of last cycle reset
 )
 
 enum class ThemeMode { LIGHT, DARK, SYSTEM }

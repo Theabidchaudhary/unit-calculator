@@ -33,6 +33,7 @@ data class MetersUiState(
     val sort: MeterSort = MeterSort.SEQUENCE,
     val remainingDays: Int = 0,
     val isLoading: Boolean = true,
+    val cycleExpired: Boolean = false,
     val reorderMode: Boolean = false,
     val sequenceOrder: List<Long> = emptyList(),
     val phasesById: Map<Long, MeterPhase> = emptyMap(),
@@ -99,6 +100,7 @@ class MetersViewModel @Inject constructor(
             sort = s,
             remainingDays = cycle.remainingDays,
             isLoading = false,
+            cycleExpired = BillingCycle.isExpired(settings.readingDate, settings.cycleResetDay),
             reorderMode = rm,
             sequenceOrder = orderedIds,
             phasesById = phases.associateBy { it.meter.id },
@@ -179,6 +181,7 @@ class MetersViewModel @Inject constructor(
             avgDailyUsage = avgDaily,
             closedAt = System.currentTimeMillis(),
         )
+        settingsRepository.setCycleResetDay(LocalDate.now().toEpochDay())
     }
 
     fun resetAllMeters(settings: AppSettings) = viewModelScope.launch {
@@ -187,6 +190,7 @@ class MetersViewModel @Inject constructor(
             monthLabel = currentMonthLabel(cycle.start),
             closedAt = System.currentTimeMillis(),
         )
+        settingsRepository.setCycleResetDay(LocalDate.now().toEpochDay())
     }
 
     private fun currentMonthLabel(start: LocalDate): String {

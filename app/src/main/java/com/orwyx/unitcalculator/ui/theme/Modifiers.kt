@@ -2,6 +2,7 @@ package com.orwyx.unitcalculator.ui.theme
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -20,68 +20,42 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/**
- * Frosted-glass surface modifier — replaces the old neumorphic style.
- * [surface] is accepted for API compatibility; pass it as a meter color tint or
- * leave it as the default surface to get the plain glass look.
- */
 @Composable
 fun Modifier.neumorphic(
     shape: RoundedCornerShape = RoundedCornerShape(24.dp),
-    elevation: Dp = 8.dp,
+    elevation: Dp = 10.dp,
     surface: Color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
 ): Modifier {
-    val isDark    = LocalNeuColors.current.isDark
-    val glassBase = if (isDark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.22f)
-
-    val borderAlpha = if (isDark) 0.30f else 0.55f
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.25f)
-    val sheenAlpha  = if (isDark) 0.20f else 0.35f
-    val cornerDp    = 24.dp
-
+    val neu = LocalNeuColors.current
     return this
-        .shadow(elevation, shape, ambientColor = shadowColor, spotColor = shadowColor)
+        .shadow(elevation = elevation, shape = shape, ambientColor = neu.shadow, spotColor = neu.shadow)
         .drawBehind {
-            val cr = CornerRadius(cornerDp.toPx())
-            drawRoundRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        glassBase.copy(alpha = (glassBase.alpha + 0.10f).coerceAtMost(1f)),
-                        glassBase,
-                    ),
+            drawRect(
+                brush = Brush.linearGradient(
+                    colors = listOf(neu.highlight.copy(alpha = 0.35f), Color.Transparent),
+                    start = Offset.Zero,
+                    end = Offset(size.width * 0.5f, size.height * 0.5f),
                 ),
-                cornerRadius = cr,
-            )
-            drawRoundRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color.White.copy(alpha = sheenAlpha), Color.Transparent),
-                    startY = 0f, endY = size.height * 0.42f,
-                ),
-                cornerRadius = cr,
-            )
-            drawRoundRect(
-                color        = Color.White.copy(alpha = borderAlpha),
-                cornerRadius = cr,
-                style        = Stroke(width = 1.dp.toPx()),
             )
         }
+        .background(color = surface, shape = shape)
 }
 
 /** Frosted-glass bar modifier for top bars and bottom bars. */
 @Composable
 fun Modifier.glassBar(isDark: Boolean): Modifier {
-    val base        = if (isDark) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.20f)
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.55f else 0.30f)
-    val sheenAlpha  = if (isDark) 0.18f else 0.30f
-    val borderAlpha = if (isDark) 0.28f else 0.50f
+    val base        = if (isDark) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.75f)
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.45f else 0.20f)
+    val sheenAlpha  = if (isDark) 0.14f else 0.30f
+    val borderAlpha = if (isDark) 0.20f else 0.35f
 
     return this
-        .shadow(10.dp, ambientColor = shadowColor, spotColor = shadowColor)
+        .shadow(8.dp, ambientColor = shadowColor, spotColor = shadowColor)
         .drawBehind {
             drawRect(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        base.copy(alpha = (base.alpha + 0.10f).coerceAtMost(1f)),
+                        base.copy(alpha = (base.alpha + 0.08f).coerceAtMost(1f)),
                         base,
                     ),
                 ),
@@ -94,9 +68,9 @@ fun Modifier.glassBar(isDark: Boolean): Modifier {
             )
             // Bottom border line
             drawRect(
-                color     = Color.White.copy(alpha = borderAlpha),
-                topLeft   = Offset(0f, size.height - 1f),
-                size      = Size(size.width, 1f),
+                color   = Color.White.copy(alpha = borderAlpha),
+                topLeft = Offset(0f, size.height - 1f),
+                size    = Size(size.width, 1f),
             )
         }
 }

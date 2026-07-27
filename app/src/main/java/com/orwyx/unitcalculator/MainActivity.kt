@@ -23,10 +23,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val rootViewModel: RootViewModel = hiltViewModel()
-            val themeMode by rootViewModel.themeMode.collectAsStateWithLifecycle()
-            val appTheme  by rootViewModel.appTheme.collectAsStateWithLifecycle()
+            val themeMode   by rootViewModel.themeMode.collectAsStateWithLifecycle()
+            val accentColor by rootViewModel.accentColor.collectAsStateWithLifecycle()
 
-            UnitCalculatorTheme(themeMode = themeMode, appTheme = appTheme) {
+            UnitCalculatorTheme(themeMode = themeMode, accentColor = accentColor) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     AppBackground()
                     UnitCalculatorNavGraph()

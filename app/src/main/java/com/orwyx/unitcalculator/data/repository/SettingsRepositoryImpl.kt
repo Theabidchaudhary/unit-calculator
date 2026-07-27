@@ -23,4 +23,5 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setAccentColor(color: AccentColor) = dataStore.setAccentColor(color)
     override suspend fun setAppTheme(theme: AppTheme) = dataStore.setAppTheme(theme)
     override suspend fun setMeterColor(meterId: Long, colorIndex: Int) = dataStore.setMeterColor(meterId, colorIndex)
+    override suspend fun setCycleResetDay(day: Long) = dataStore.setCycleResetDay(day)
 }

@@ -1,6 +1,7 @@
 package com.orwyx.unitcalculator.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,12 +33,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.PowerSettingsNew
+import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -44,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,20 +64,20 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.IntOffset
 import com.orwyx.unitcalculator.core.util.Formatters
 import com.orwyx.unitcalculator.domain.model.Meter
 import com.orwyx.unitcalculator.domain.model.MeterPhase
 import com.orwyx.unitcalculator.ui.theme.ConsumptionColors
-import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
 import com.orwyx.unitcalculator.ui.theme.StatusDeepGreen
 import com.orwyx.unitcalculator.ui.theme.StatusRed
-import com.orwyx.unitcalculator.ui.theme.WarmAccent
 import com.orwyx.unitcalculator.ui.theme.pressScale
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
 
 @Composable
 fun MeterCard(
@@ -96,7 +101,7 @@ fun MeterCard(
     val infiniteTransition = rememberInfiniteTransition(label = "wiggle")
     val wiggleRotation by infiniteTransition.animateFloat(
         initialValue = if (sequenceNumber % 2 == 0) -2f else 2f,
-        targetValue = if (sequenceNumber % 2 == 0) 2f else -2f,
+        targetValue  = if (sequenceNumber % 2 == 0) 2f else -2f,
         animationSpec = infiniteRepeatable(
             animation = tween(150, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse,
@@ -104,9 +109,13 @@ fun MeterCard(
         label = "wiggle",
     )
 
+    val cardBg = meterColor?.copy(alpha = 0.13f)
+    val nameColor = meterColor ?: MaterialTheme.colorScheme.onSurface
+
     Box(modifier = modifier.rotate(if (reorderMode) wiggleRotation else 0f)) {
         NeumorphicCard(
             modifier = Modifier.fillMaxWidth(),
+            backgroundColor = cardBg,
             onClick = if (reorderMode) ({}) else onClick,
         ) {
             Column {
@@ -125,9 +134,9 @@ fun MeterCard(
                             meter.name,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = nameColor,
                             maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     StatusBadge(meter.status)
@@ -139,11 +148,10 @@ fun MeterCard(
                     )
                 }
 
-                // Compact reorder row: ref number prominent
                 AnimatedVisibility(
                     visible = reorderMode,
                     enter = expandVertically(animationSpec = tween(280, easing = EaseInOut)),
-                    exit = shrinkVertically(animationSpec = tween(280, easing = EaseInOut)),
+                    exit  = shrinkVertically(animationSpec = tween(280, easing = EaseInOut)),
                 ) {
                     Text(
                         text = Formatters.maskedReference(meter.referenceNumber),
@@ -154,11 +162,10 @@ fun MeterCard(
                     )
                 }
 
-                // Full card content
                 AnimatedVisibility(
                     visible = !reorderMode,
                     enter = expandVertically(animationSpec = tween(280, easing = EaseInOut)),
-                    exit = shrinkVertically(animationSpec = tween(280, easing = EaseInOut)),
+                    exit  = shrinkVertically(animationSpec = tween(280, easing = EaseInOut)),
                 ) {
                     Column {
                         Spacer(Modifier.height(6.dp))
@@ -176,10 +183,10 @@ fun MeterCard(
 
                         Spacer(Modifier.height(12.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Stat("Consumed", Formatters.units(meter.consumedUnits))
+                            Stat("Consumed",  Formatters.units(meter.consumedUnits))
                             Stat("Remaining", Formatters.units(meter.remainingUnits))
-                            Stat("Used", Formatters.percent(meter.usedFraction), valueColor = ConsumptionColors.colorFor(meter.usedFraction))
-                            Stat("Target", Formatters.units(meter.targetLimit))
+                            Stat("Used",      Formatters.percent(meter.usedFraction), valueColor = ConsumptionColors.colorFor(meter.usedFraction))
+                            Stat("Target",    Formatters.units(meter.targetLimit))
                         }
 
                         Spacer(Modifier.height(14.dp))
@@ -210,26 +217,25 @@ fun MeterCard(
 @Composable
 private fun PowerButton(isActive: Boolean, isClosed: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
-    val isDark = LocalNeuColors.current.isDark
-    val (tint, solidBg, accent) = when {
-        isClosed -> Triple(Color.White, StatusRed, StatusRed)
-        isActive -> Triple(Color.White, StatusDeepGreen, StatusDeepGreen)
-        else -> Triple(Color.White.copy(alpha = 0.7f), if (isDark) Color(0xFF2D2D2D) else Color.White, WarmAccent)
+    val (tint, bg) = when {
+        isClosed -> MaterialTheme.colorScheme.onPrimary to StatusRed
+        isActive -> MaterialTheme.colorScheme.onPrimary to StatusDeepGreen
+        else     -> MaterialTheme.colorScheme.onSurfaceVariant to MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     }
     Box(
         modifier = Modifier
             .size(36.dp)
             .pressScale(interaction, pressedScale = 0.88f)
             .clip(MaterialTheme.shapes.small)
-            .background(solidBg)
-            .accentGradientOverlay(accent = accent, cornerRadius = 8.dp)
+            .background(bg)
             .clickable(interactionSource = interaction, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             Icons.Rounded.PowerSettingsNew,
             contentDescription = if (isClosed) "Closed meter" else if (isActive) "Active meter" else "Switch meter on",
-            tint = tint, modifier = Modifier.size(20.dp),
+            tint = tint,
+            modifier = Modifier.size(20.dp),
         )
     }
 }
@@ -263,18 +269,15 @@ private fun ClosedPill() {
 private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClick: () -> Unit, onClear: () -> Unit) {
     val fmt = remember { DateTimeFormatter.ofPattern("d MMM") }
     val interaction = remember { MutableInteractionSource() }
-    val isDark = LocalNeuColors.current.isDark
     val hasDate = closedDate != null
-    val solidBg = if (hasDate) StatusRed else if (isDark) Color(0xFF2D2D2D) else Color.White
-    val accent = if (hasDate) StatusRed else WarmAccent
-    val contentColor = Color.White
+    val bg = if (hasDate) StatusRed else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    val contentColor = if (hasDate) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         modifier = Modifier
             .width(72.dp)
             .height(52.dp)
             .clip(MaterialTheme.shapes.medium)
-            .background(solidBg)
-            .accentGradientOverlay(accent = accent, cornerRadius = 12.dp)
+            .background(bg)
             .pressScale(interaction, pressedScale = 0.88f)
             .combinedClickable(
                 interactionSource = interaction,
@@ -331,6 +334,9 @@ private fun CurrentReadingRow(
     var fieldValue by rememberSaveable(meter.id, meter.currentReading) {
         mutableStateOf(formatReading(meter.currentReading, allowDecimals))
     }
+    var hasError by remember { mutableStateOf(false) }
+    val shakeOffset = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -340,6 +346,19 @@ private fun CurrentReadingRow(
         if (fieldDisabled) return
         val trimmed = fieldValue.trim()
         if (trimmed.isEmpty()) return
+        val parsed = trimmed.toDoubleOrNull()
+        if (parsed != null && parsed < meter.previousReading) {
+            // Reject: current reading lower than previous reading
+            hasError = true
+            scope.launch {
+                repeat(5) { i ->
+                    shakeOffset.animateTo(if (i % 2 == 0) 10f else -10f, tween(55))
+                }
+                shakeOffset.animateTo(0f, tween(55))
+            }
+            return
+        }
+        hasError = false
         onSubmit(meter, trimmed)
         keyboard?.hide()
         focusManager.clearFocus()
@@ -357,7 +376,11 @@ private fun CurrentReadingRow(
             onClear = onClearClosedDate,
         )
         OutlinedTextField(
-            value = fieldValue, onValueChange = { fieldValue = it },
+            value = fieldValue,
+            onValueChange = {
+                fieldValue = it
+                hasError = false
+            },
             label = {
                 Text(
                     "Current reading",
@@ -368,36 +391,34 @@ private fun CurrentReadingRow(
                 )
             },
             singleLine = true,
-            enabled = !fieldDisabled, shape = MaterialTheme.shapes.medium,
+            enabled = !fieldDisabled,
+            shape = MaterialTheme.shapes.medium,
             textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
-            modifier = Modifier.weight(1f).heightIn(min = 52.dp).focusRequester(focusRequester),
-        )
-        val isDark = LocalNeuColors.current.isDark
-        val solidBg = if (isDark) Color(0xFF2D2D2D) else Color.White
-        Box(
+            isError = hasError,
+            colors = if (hasError) OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = StatusRed,
+                unfocusedBorderColor = StatusRed,
+                focusedLabelColor = StatusRed,
+                unfocusedLabelColor = StatusRed,
+                focusedTextColor = StatusRed,
+                unfocusedTextColor = StatusRed,
+            ) else OutlinedTextFieldDefaults.colors(),
             modifier = Modifier
-                .width(72.dp)
-                .height(52.dp)
-                .pressScale(buttonInteraction)
-                .clip(MaterialTheme.shapes.medium)
-                .background(if (fieldDisabled) solidBg.copy(alpha = 0.4f) else solidBg)
-                .accentGradientOverlay(cornerRadius = 12.dp)
-                .clickable(
-                    interactionSource = buttonInteraction,
-                    indication = null,
-                    enabled = !fieldDisabled,
-                    onClick = { submit() },
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                "Calculate",
-                style = MaterialTheme.typography.labelMedium,
-                color = if (fieldDisabled) Color.White.copy(alpha = 0.45f) else Color.White,
-            )
-        }
+                .weight(1f)
+                .heightIn(min = 52.dp)
+                .focusRequester(focusRequester)
+                .offset { IntOffset(shakeOffset.value.roundToInt(), 0) },
+        )
+        Button(
+            onClick = { submit() },
+            interactionSource = buttonInteraction,
+            enabled = !fieldDisabled,
+            modifier = Modifier.width(72.dp).height(52.dp).pressScale(buttonInteraction),
+            shape = MaterialTheme.shapes.medium,
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+        ) { Text("Calculate", style = MaterialTheme.typography.labelMedium) }
     }
 }
 
@@ -431,7 +452,7 @@ private fun SafeBudgetChip(meter: Meter, phase: MeterPhase?, remainingDays: Int,
         style = MaterialTheme.typography.labelLarge,
         color = color,
         maxLines = 1,
-        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.small)

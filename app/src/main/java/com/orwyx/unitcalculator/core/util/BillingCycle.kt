@@ -15,11 +15,27 @@ data class BillingCycle(
 
     companion object {
         fun of(readingDate: Int, today: LocalDate = LocalDate.now()): BillingCycle {
-            val day = readingDate.coerceIn(1, 31)
-            val startThisMonth = today.withDayOfMonth(day)
-            val start = if (today.dayOfMonth >= day) startThisMonth else startThisMonth.minusMonths(1)
-            val end = start.plusMonths(1)
+            val day = readingDate.coerceIn(1, 28) // safe across all months
+            val startThisMonth = safeWithDayOfMonth(today, day)
+            // Reading date is INCLUSIVE in the ending cycle: cycle ends ON the reading date.
+            // Only switch to a new cycle if today is STRICTLY AFTER the reading date.
+            val start = if (today.dayOfMonth > day) startThisMonth else startThisMonth.minusMonths(1)
+            val end = safeWithDayOfMonth(start.plusMonths(1), day)
             return BillingCycle(start = start, end = end, today = today)
+        }
+
+        /** True if the reading date has passed this month and the user should reset. */
+        fun isExpired(readingDate: Int, lastResetEpochDay: Long, today: LocalDate = LocalDate.now()): Boolean {
+            val day = readingDate.coerceIn(1, 28)
+            if (today.dayOfMonth <= day) return false
+            // The reading date this month
+            val thisMonthReadingDate = safeWithDayOfMonth(today, day)
+            return lastResetEpochDay < thisMonthReadingDate.toEpochDay()
+        }
+
+        private fun safeWithDayOfMonth(date: LocalDate, day: Int): LocalDate {
+            val maxDay = date.lengthOfMonth()
+            return date.withDayOfMonth(day.coerceAtMost(maxDay))
         }
     }
 }

@@ -17,4 +17,5 @@ interface SettingsRepository {
     suspend fun setAccentColor(color: AccentColor)
     suspend fun setAppTheme(theme: AppTheme)
     suspend fun setMeterColor(meterId: Long, colorIndex: Int)
+    suspend fun setCycleResetDay(day: Long)
 }

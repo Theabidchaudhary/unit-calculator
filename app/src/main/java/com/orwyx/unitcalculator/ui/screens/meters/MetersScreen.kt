@@ -42,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -83,7 +84,15 @@ fun MetersScreen(
 
     var meterToReset by remember { mutableStateOf<Meter?>(null) }
     var showResetAll by remember { mutableStateOf(false) }
+    var showCycleExpiredDialog by remember { mutableStateOf(false) }
     val itemHeights = remember { mutableStateMapOf<Long, Int>() }
+
+    // Show popup once per session when reading cycle has expired
+    LaunchedEffect(state.cycleExpired, state.isLoading) {
+        if (state.cycleExpired && !state.isLoading && state.meters.isNotEmpty()) {
+            showCycleExpiredDialog = true
+        }
+    }
 
     val meterColorMap = remember(state.meters, state.settings.meterColors) {
         val usedIndices = state.settings.meterColors.values.toSet()
@@ -270,6 +279,17 @@ fun MetersScreen(
             confirmLabel = "Reset All",
             onConfirm = { viewModel.resetAllMeters(state.settings); showResetAll = false },
             onDismiss = { showResetAll = false },
+        )
+    }
+
+    if (showCycleExpiredDialog) {
+        ConfirmDialog(
+            title = "Reading cycle has ended",
+            message = "Your reading date (${state.settings.readingDate}) has passed. Reset all meters to archive this month's readings and start the new cycle.",
+            confirmLabel = "Reset Now",
+            dismissLabel = "Later",
+            onConfirm = { viewModel.resetAllMeters(state.settings); showCycleExpiredDialog = false },
+            onDismiss = { showCycleExpiredDialog = false },
         )
     }
 }
