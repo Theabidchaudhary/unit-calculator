@@ -36,6 +36,7 @@ fun HomeScaffold(
     onOpenMeter: (Long) -> Unit,
     onAddMeter: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenColorPicker: () -> Unit,
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(BottomTab.METERS) }
     val pagerState  = rememberPagerState(initialPage = if (selectedTab == BottomTab.METERS) 0 else 1, pageCount = { 2 })
@@ -69,7 +70,11 @@ fun HomeScaffold(
         ) { page ->
             when (page) {
                 0    -> MetersScreen(onOpenMeter = onOpenMeter, contentPadding = contentPadding)
-                1    -> PlanningScreen(contentPadding = contentPadding)
+                1    -> PlanningScreen(
+                    contentPadding    = contentPadding,
+                    onOpenColorPicker = onOpenColorPicker,
+                    onNavigateBack    = { selectTab(BottomTab.METERS) },
+                )
                 else -> Unit
             }
         }
