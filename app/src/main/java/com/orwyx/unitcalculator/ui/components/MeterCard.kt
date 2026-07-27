@@ -1,5 +1,6 @@
 package com.orwyx.unitcalculator.ui.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -14,9 +15,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
@@ -41,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -54,6 +58,8 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.orwyx.unitcalculator.core.util.Formatters
 import com.orwyx.unitcalculator.domain.model.Meter
@@ -66,6 +72,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 @Composable
 fun MeterCard(
@@ -201,33 +209,41 @@ private fun PowerButton(isActive: Boolean, isClosed: Boolean, onClick: () -> Uni
 
 @Composable
 private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClick: () -> Unit, onClear: () -> Unit) {
-    val fmt         = remember { DateTimeFormatter.ofPattern("d MMM") }
     val interaction = remember { MutableInteractionSource() }
     val hasDate     = closedDate != null
     val tint        = if (hasDate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
     val bg          = if (hasDate) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
     Box {
-        Column(
+        Box(
             modifier = Modifier
-                .clip(MaterialTheme.shapes.small)
+                .height(58.dp)
+                .defaultMinSize(minWidth = 58.dp)
+                .clip(MaterialTheme.shapes.medium)
                 .background(bg)
                 .pressScale(interaction, pressedScale = 0.88f)
                 .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = 10.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                Icons.Rounded.CalendarMonth,
-                contentDescription = if (hasDate) "Closed ${closedDate!!.format(fmt)}" else "Set closed date",
-                tint     = tint,
-                modifier = Modifier.size(18.dp),
-            )
             if (hasDate) {
-                Text(closedDate!!.format(fmt), style = MaterialTheme.typography.labelSmall, color = tint, fontWeight = FontWeight.Medium)
+                Text(
+                    text       = closedDate!!.format(DateTimeFormatter.ofPattern("d\nMMM")),
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color      = tint,
+                    textAlign  = TextAlign.Center,
+                )
+            } else {
+                Icon(
+                    Icons.Rounded.CalendarMonth,
+                    contentDescription = "Set closed date",
+                    tint     = tint,
+                    modifier = Modifier.size(24.dp),
+                )
             }
         }
         if (hasDate) {
-            IconButton(onClick = onClear, modifier = Modifier.align(Alignment.TopEnd).size(16.dp)) {
+            IconButton(onClick = onClear, modifier = Modifier.align(Alignment.TopEnd).size(20.dp)) {
                 Icon(Icons.Rounded.Close, contentDescription = "Clear closed date", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
             }
         }
@@ -290,6 +306,9 @@ private fun CurrentReadingRow(
     var fieldValue by rememberSaveable(meter.id, meter.currentReading) {
         mutableStateOf(formatReading(meter.currentReading, allowDecimals))
     }
+    var isError by rememberSaveable(meter.id) { mutableStateOf(false) }
+    val shakeAnim     = remember { Animatable(0f) }
+    val scope         = rememberCoroutineScope()
     val keyboard      = LocalSoftwareKeyboardController.current
     val focusManager  = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -299,6 +318,17 @@ private fun CurrentReadingRow(
         if (isClosed) return
         val trimmed = fieldValue.trim()
         if (trimmed.isEmpty()) return
+        val parsed = trimmed.toDoubleOrNull()
+        if (parsed != null && parsed < meter.previousReading) {
+            isError = true
+            scope.launch {
+                for (target in listOf(10f, -10f, 8f, -8f, 5f, -5f, 0f)) {
+                    shakeAnim.animateTo(target, tween(55, easing = LinearEasing))
+                }
+            }
+            return
+        }
+        isError = false
         onSubmit(meter, trimmed)
         keyboard?.hide()
         focusManager.clearFocus()
@@ -317,15 +347,20 @@ private fun CurrentReadingRow(
         )
         OutlinedTextField(
             value          = fieldValue,
-            onValueChange  = { fieldValue = it },
-            label          = { Text("Current reading") },
+            onValueChange  = { fieldValue = it; isError = false },
+            label          = { Text("Current reading", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+            isError        = isError,
             singleLine     = true,
             enabled        = !isClosed,
             shape          = MaterialTheme.shapes.medium,
-            textStyle      = MaterialTheme.typography.bodyMedium,
+            textStyle      = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Center),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
-            modifier        = Modifier.weight(1f).heightIn(min = 58.dp).focusRequester(focusRequester),
+            modifier        = Modifier
+                .weight(1f)
+                .heightIn(min = 58.dp)
+                .focusRequester(focusRequester)
+                .offset { IntOffset(shakeAnim.value.roundToInt(), 0) },
         )
         Button(
             onClick           = { submit() },

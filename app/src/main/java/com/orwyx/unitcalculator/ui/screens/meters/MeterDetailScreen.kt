@@ -17,6 +17,8 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.RestartAlt
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +27,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +77,11 @@ fun MeterDetailScreen(
                         Icon(Icons.Rounded.Delete, contentDescription = "Delete")
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    titleContentColor          = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor     = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             )
         },
     ) { padding ->
@@ -129,13 +137,28 @@ fun MeterDetailScreen(
 
             item {
                 val isClosed = meter.closedDate != null
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(onClick = { showReset = true }, enabled = !isClosed, modifier = Modifier.weight(1f).height(50.dp), shape = MaterialTheme.shapes.large) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    val resetInteraction = remember { MutableInteractionSource() }
+                    Button(
+                        onClick = { showReset = true },
+                        enabled = !isClosed,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .pressScale(resetInteraction),
+                        interactionSource = resetInteraction,
+                        shape = MaterialTheme.shapes.extraLarge,
+                    ) {
                         Icon(Icons.Rounded.RestartAlt, contentDescription = null)
-                        Spacer(Modifier.height(0.dp))
-                        Text(" Reset month")
+                        Spacer(Modifier.width(8.dp))
+                        Text("Reset Month", style = MaterialTheme.typography.labelLarge)
                     }
-                    OutlinedButton(onClick = { meter?.let { onEdit(it.id) } }, enabled = meter?.closedDate == null, modifier = Modifier.weight(1f).height(50.dp), shape = MaterialTheme.shapes.large) {
+                    OutlinedButton(
+                        onClick = { meter?.let { onEdit(it.id) } },
+                        enabled = meter?.closedDate == null,
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = MaterialTheme.shapes.large,
+                    ) {
                         Icon(Icons.Rounded.Edit, contentDescription = null)
                         Text(" Edit")
                     }

@@ -360,8 +360,11 @@ private fun accentColorValue(accent: AccentColor): Color = when (accent) {
 @Composable
 private fun transparentTopBarColors(): TopAppBarColors =
     TopAppBarDefaults.topAppBarColors(
-        containerColor        = Color.Transparent,
-        scrolledContainerColor = Color.Transparent,
+        containerColor             = Color.Transparent,
+        scrolledContainerColor     = Color.Transparent,
+        titleContentColor          = MaterialTheme.colorScheme.onSurface,
+        actionIconContentColor     = MaterialTheme.colorScheme.onSurface,
+        navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
     )
 
 @Composable

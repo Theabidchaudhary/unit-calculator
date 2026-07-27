@@ -37,6 +37,7 @@ fun SectionHeader(
             text = title,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         trailing?.invoke()
     }

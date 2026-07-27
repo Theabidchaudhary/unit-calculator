@@ -29,7 +29,7 @@ fun AppTopBar(
     modifier: Modifier = Modifier,
 ) {
     val isDark   = LocalNeuColors.current.isDark
-    val barColor = if (isDark) Color.Black.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.70f)
+    val barColor = if (isDark) Color.Black.copy(alpha = 0.82f) else Color.White.copy(alpha = 0.90f)
 
     CenterAlignedTopAppBar(
         title   = { Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge) },
@@ -39,8 +39,11 @@ fun AppTopBar(
             }
         },
         colors  = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor         = Color.Transparent,
-            scrolledContainerColor = Color.Transparent,
+            containerColor            = Color.Transparent,
+            scrolledContainerColor    = Color.Transparent,
+            titleContentColor         = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor    = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
         ),
         modifier = modifier
             .fillMaxWidth()
@@ -49,7 +52,7 @@ fun AppTopBar(
                 style = HazeStyle(
                     backgroundColor = barColor,
                     tint            = null,
-                    blurRadius      = 48.dp,
+                    blurRadius      = 20.dp,
                 ),
             ),
     )
