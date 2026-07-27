@@ -1,10 +1,11 @@
 package com.orwyx.unitcalculator.ui.navigation
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -29,17 +31,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
 import com.orwyx.unitcalculator.ui.theme.pressScale
+
+// Smooth ease-in-out: starts slow, accelerates, then decelerates to a stop
+private val SmoothEasing = CubicBezierEasing(0.65f, 0f, 0.35f, 1f)
 
 @Composable
 fun GlassBottomNav(
@@ -52,10 +54,9 @@ fun GlassBottomNav(
     val tabs    = BottomTab.entries
     val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceIn(0, tabs.lastIndex)
 
-    val barGlass    = if (isDark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.22f)
-    val barSheen    = if (isDark) 0.22f else 0.38f
-    val borderAlpha = if (isDark) 0.32f else 0.55f
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.30f)
+    val barGlass    = if (isDark) Color.Black.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.72f)
+    val borderAlpha = if (isDark) 0.25f else 0.50f
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.28f)
 
     BoxWithConstraints(
         modifier = modifier
@@ -63,65 +64,56 @@ fun GlassBottomNav(
             .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
             .shadow(
-                elevation     = 20.dp,
-                shape         = MaterialTheme.shapes.extraLarge,
-                ambientColor  = shadowColor,
-                spotColor     = primary.copy(alpha = 0.28f),
+                elevation    = 18.dp,
+                shape        = MaterialTheme.shapes.extraLarge,
+                ambientColor = shadowColor,
+                spotColor    = primary.copy(alpha = 0.22f),
             )
             .clip(MaterialTheme.shapes.extraLarge)
-            .drawBehind {
-                val cr = CornerRadius(50.dp.toPx())
-                drawRoundRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            barGlass.copy(alpha = (barGlass.alpha + 0.10f).coerceAtMost(1f)),
-                            barGlass,
-                        ),
-                    ),
-                    cornerRadius = cr,
-                )
-                drawRoundRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color.White.copy(alpha = barSheen), Color.Transparent),
-                        startY = 0f, endY = size.height * 0.5f,
-                    ),
-                    cornerRadius = cr,
-                )
-                drawRoundRect(
-                    color        = Color.White.copy(alpha = borderAlpha),
-                    cornerRadius = cr,
-                    style        = Stroke(width = 1.dp.toPx()),
-                )
-            }
-            .padding(8.dp)
-            .height(56.dp),
+            .height(72.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
+        // Layer 1: Frosted blurred background
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(radius = 24.dp)
+                .background(barGlass),
+        )
+
+        // Layer 2: Border ring (stays sharp)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = borderAlpha),
+                    shape = MaterialTheme.shapes.extraLarge,
+                ),
+        )
+
         val slotWidth = maxWidth / tabs.size
         val indicatorOffset by animateDpAsState(
             targetValue   = slotWidth * selectedIndex,
-            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
+            animationSpec = tween(durationMillis = 420, easing = SmoothEasing),
             label         = "navIndicatorOffset",
         )
 
-        // Selected pill with top-to-bottom accent gradient
+        // Layer 3: Selected pill indicator
         Box(
             modifier = Modifier
                 .offset(x = indicatorOffset)
                 .width(slotWidth)
                 .fillMaxHeight()
-                .padding(4.dp)
-                .shadow(10.dp, CircleShape, ambientColor = primary.copy(alpha = 0.45f), spotColor = primary.copy(alpha = 0.55f))
+                .padding(8.dp)
+                .shadow(8.dp, CircleShape, ambientColor = primary.copy(alpha = 0.35f), spotColor = primary.copy(alpha = 0.45f))
                 .clip(CircleShape)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(primary.copy(alpha = 0.82f), primary),
-                    ),
-                ),
+                .background(primary),
         )
 
+        // Layer 4: Tab icons + labels
         Row(
-            modifier              = Modifier.fillMaxWidth(),
+            modifier              = Modifier.fillMaxSize().padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment     = Alignment.CenterVertically,
         ) {
@@ -139,10 +131,11 @@ fun GlassBottomNav(
 
 @Composable
 private fun NavTab(tab: BottomTab, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val content by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.onPrimary
-        else MaterialTheme.colorScheme.onSurfaceVariant,
-        label = "tabContent",
+    val contentColor by animateColorAsState(
+        targetValue   = if (selected) MaterialTheme.colorScheme.onPrimary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(280, easing = SmoothEasing),
+        label         = "tabContent",
     )
     val interactionSource = remember { MutableInteractionSource() }
     Row(
@@ -153,10 +146,10 @@ private fun NavTab(tab: BottomTab, selected: Boolean, onClick: () -> Unit, modif
         horizontalArrangement = Arrangement.Center,
         verticalAlignment     = Alignment.CenterVertically,
     ) {
-        Icon(tab.icon, contentDescription = tab.label, tint = content, modifier = Modifier.size(22.dp))
+        Icon(tab.icon, contentDescription = tab.label, tint = contentColor, modifier = Modifier.size(22.dp))
         if (selected) {
             Spacer(Modifier.size(8.dp))
-            Text(tab.label, color = content, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Text(tab.label, color = contentColor, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
         }
     }
 }

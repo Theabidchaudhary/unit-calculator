@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
@@ -53,6 +54,7 @@ fun HomeScaffold(
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         topBar = { AppTopBar(title = if (selectedTab == BottomTab.METERS) "Unit Calculator" else "Planning", onSettings = onOpenSettings) },
     ) { padding ->
         Box(Modifier.fillMaxSize()) {

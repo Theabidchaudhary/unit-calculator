@@ -8,8 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -65,9 +63,10 @@ import com.orwyx.unitcalculator.domain.model.ThemeMode
 import com.orwyx.unitcalculator.ui.components.NeumorphicCard
 import com.orwyx.unitcalculator.ui.components.SectionHeader
 import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
+import com.orwyx.unitcalculator.ui.theme.frostedBlurBackground
 import com.orwyx.unitcalculator.ui.theme.glassBar
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
@@ -96,6 +95,7 @@ fun SettingsScreen(
 
     Scaffold(
         containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             Box(
@@ -103,6 +103,13 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .glassBar(isDark),
             ) {
+                // Frosted blur background layer
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .frostedBlurBackground(isDark),
+                )
+                // Sharp content on top
                 TopAppBar(
                     title = { Text("Settings", fontWeight = FontWeight.Bold) },
                     navigationIcon = {
@@ -160,33 +167,43 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(12.dp))
-                    FlowRow(
-                        maxItemsInEachRow = 5,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        AccentColor.entries.forEach { accent ->
-                            val selected = settings.accentColor == accent
-                            val accentHue = accentColorValue(accent)
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(accentHue)
-                                    .then(
-                                        if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
-                                        else Modifier
-                                    )
-                                    .clickable { viewModel.setAccentColor(accent) },
-                                contentAlignment = Alignment.Center,
+                    // 5-column grid with weight(1f) so swatches fill full card width
+                    val accentEntries = AccentColor.entries
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        accentEntries.chunked(5).forEach { rowAccents ->
+                            Row(
+                                modifier              = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
-                                if (selected) {
-                                    Icon(
-                                        Icons.Rounded.Check,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp),
-                                    )
+                                rowAccents.forEach { accent ->
+                                    val selected = settings.accentColor == accent
+                                    val accentHue = accentColorValue(accent)
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .aspectRatio(1f)
+                                            .clip(CircleShape)
+                                            .background(accentHue)
+                                            .then(
+                                                if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                                                else Modifier
+                                            )
+                                            .clickable { viewModel.setAccentColor(accent) },
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        if (selected) {
+                                            Icon(
+                                                Icons.Rounded.Check,
+                                                contentDescription = null,
+                                                tint = Color.White,
+                                                modifier = Modifier.size(20.dp),
+                                            )
+                                        }
+                                    }
+                                }
+                                // Fill empty slots in the last row
+                                repeat(5 - rowAccents.size) {
+                                    Spacer(Modifier.weight(1f))
                                 }
                             }
                         }

@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
+import com.orwyx.unitcalculator.ui.theme.frostedBlurBackground
 import com.orwyx.unitcalculator.ui.theme.glassBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,6 +29,13 @@ fun AppTopBar(title: String, onSettings: () -> Unit) {
             .fillMaxWidth()
             .glassBar(isDark),
     ) {
+        // Blurred background layer (blurs only this layer's own fill, not the sharp content above)
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .frostedBlurBackground(isDark),
+        )
+        // Sharp content on top of the blurred background
         CenterAlignedTopAppBar(
             title = { Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge) },
             actions = {
@@ -44,6 +52,6 @@ fun AppTopBar(title: String, onSettings: () -> Unit) {
 @Composable
 private fun transparentTopBarColors(): TopAppBarColors =
     TopAppBarDefaults.centerAlignedTopAppBarColors(
-        containerColor = Color.Transparent,
+        containerColor         = Color.Transparent,
         scrolledContainerColor = Color.Transparent,
     )

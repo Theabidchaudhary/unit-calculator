@@ -9,12 +9,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
@@ -23,50 +23,40 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun Modifier.neumorphic(
     shape: RoundedCornerShape = RoundedCornerShape(24.dp),
-    elevation: Dp = 10.dp,
+    elevation: Dp = 6.dp,
     surface: Color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
 ): Modifier {
     val neu = LocalNeuColors.current
     return this
-        .shadow(elevation = elevation, shape = shape, ambientColor = neu.shadow, spotColor = neu.shadow)
-        .drawBehind {
-            drawRect(
-                brush = Brush.linearGradient(
-                    colors = listOf(neu.highlight.copy(alpha = 0.35f), Color.Transparent),
-                    start = Offset.Zero,
-                    end = Offset(size.width * 0.5f, size.height * 0.5f),
-                ),
-            )
-        }
+        .shadow(
+            elevation = elevation,
+            shape = shape,
+            ambientColor = neu.shadow.copy(alpha = 0.60f),
+            spotColor = neu.shadow.copy(alpha = 0.40f),
+        )
         .background(color = surface, shape = shape)
 }
 
-/** Frosted-glass bar modifier for top bars and bottom bars. */
+/**
+ * Frosted-glass bar: blurred background layer only (content stays sharp when
+ * placed as a sibling composable using matchParentSize or Box ordering).
+ */
+@Composable
+fun Modifier.frostedBlurBackground(isDark: Boolean): Modifier {
+    val baseColor = if (isDark) Color.Black.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.72f)
+    return this
+        .blur(radius = 24.dp)
+        .background(baseColor)
+}
+
+/** Frosted-glass top-border line + shadow overlay (not blurred, drawn on top of blur layer). */
 @Composable
 fun Modifier.glassBar(isDark: Boolean): Modifier {
-    val base        = if (isDark) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.75f)
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.45f else 0.20f)
-    val sheenAlpha  = if (isDark) 0.14f else 0.30f
-    val borderAlpha = if (isDark) 0.20f else 0.35f
-
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.50f else 0.18f)
+    val borderAlpha = if (isDark) 0.22f else 0.45f
     return this
         .shadow(8.dp, ambientColor = shadowColor, spotColor = shadowColor)
         .drawBehind {
-            drawRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        base.copy(alpha = (base.alpha + 0.08f).coerceAtMost(1f)),
-                        base,
-                    ),
-                ),
-            )
-            drawRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color.White.copy(alpha = sheenAlpha), Color.Transparent),
-                    startY = 0f, endY = size.height * 0.48f,
-                ),
-            )
-            // Bottom border line
             drawRect(
                 color   = Color.White.copy(alpha = borderAlpha),
                 topLeft = Offset(0f, size.height - 1f),
@@ -83,9 +73,9 @@ fun Modifier.pressScale(
 ): Modifier {
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue  = if (isPressed) pressedScale else idleScale,
+        targetValue   = if (isPressed) pressedScale else idleScale,
         animationSpec = tween(durationMillis = 140),
-        label        = "pressScale",
+        label         = "pressScale",
     )
     return this.scale(scale)
 }
