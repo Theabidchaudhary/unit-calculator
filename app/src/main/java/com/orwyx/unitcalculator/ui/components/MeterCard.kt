@@ -22,6 +22,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -208,30 +213,37 @@ private fun PowerButton(isActive: Boolean, isClosed: Boolean, onClick: () -> Uni
 }
 
 @Composable
-private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClick: () -> Unit, onClear: () -> Unit) {
+private fun CloseDateIconButton(
+    closedDate: LocalDate?,
+    enabled: Boolean,
+    calendarWidth: androidx.compose.ui.unit.Dp,
+    onClick: () -> Unit,
+    onClear: () -> Unit,
+) {
     val interaction = remember { MutableInteractionSource() }
     val hasDate     = closedDate != null
-    val tint        = if (hasDate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-    val bg          = if (hasDate) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    val tint        = if (hasDate) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+    val bg          = if (hasDate) StatusRed else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
     Box {
         Box(
             modifier = Modifier
                 .height(58.dp)
-                .defaultMinSize(minWidth = 58.dp)
+                .width(calendarWidth)
                 .clip(MaterialTheme.shapes.medium)
                 .background(bg)
                 .pressScale(interaction, pressedScale = 0.88f)
                 .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
-                .padding(horizontal = 10.dp),
+                .padding(horizontal = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
             if (hasDate) {
                 Text(
-                    text       = closedDate!!.format(DateTimeFormatter.ofPattern("d\nMMM")),
-                    style      = MaterialTheme.typography.titleMedium,
+                    text       = closedDate!!.format(DateTimeFormatter.ofPattern("d MMM")),
+                    style      = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color      = tint,
                     textAlign  = TextAlign.Center,
+                    maxLines   = 1,
                 )
             } else {
                 Icon(
@@ -244,7 +256,7 @@ private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClic
         }
         if (hasDate) {
             IconButton(onClick = onClear, modifier = Modifier.align(Alignment.TopEnd).size(20.dp)) {
-                Icon(Icons.Rounded.Close, contentDescription = "Clear closed date", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
+                Icon(Icons.Rounded.Close, contentDescription = "Clear closed date", tint = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
             }
         }
     }
@@ -313,6 +325,8 @@ private fun CurrentReadingRow(
     val focusManager  = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     val buttonInteraction = remember { MutableInteractionSource() }
+    var buttonWidthPx by remember { mutableIntStateOf(0) }
+    val density = LocalDensity.current
 
     fun submit() {
         if (isClosed) return
@@ -339,11 +353,13 @@ private fun CurrentReadingRow(
         verticalAlignment    = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        val calendarWidth = if (buttonWidthPx > 0) with(density) { buttonWidthPx.toDp() } else 72.dp
         CloseDateIconButton(
-            closedDate = meter.closedDate,
-            enabled    = !isClosed,
-            onClick    = onCalendarClick,
-            onClear    = onClearClosedDate,
+            closedDate    = meter.closedDate,
+            enabled       = !isClosed,
+            calendarWidth = calendarWidth,
+            onClick       = onCalendarClick,
+            onClear       = onClearClosedDate,
         )
         OutlinedTextField(
             value          = fieldValue,
@@ -358,7 +374,7 @@ private fun CurrentReadingRow(
             keyboardActions = KeyboardActions(onDone = { submit() }),
             modifier        = Modifier
                 .weight(1f)
-                .heightIn(min = 58.dp)
+                .height(58.dp)
                 .focusRequester(focusRequester)
                 .offset { IntOffset(shakeAnim.value.roundToInt(), 0) },
         )
@@ -366,7 +382,10 @@ private fun CurrentReadingRow(
             onClick           = { submit() },
             interactionSource = buttonInteraction,
             enabled           = !isClosed,
-            modifier          = Modifier.height(58.dp).pressScale(buttonInteraction),
+            modifier          = Modifier
+                .height(58.dp)
+                .pressScale(buttonInteraction)
+                .onSizeChanged { buttonWidthPx = it.width },
             shape             = MaterialTheme.shapes.medium,
             contentPadding    = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
         ) { Text("Calculate", style = MaterialTheme.typography.labelMedium) }
