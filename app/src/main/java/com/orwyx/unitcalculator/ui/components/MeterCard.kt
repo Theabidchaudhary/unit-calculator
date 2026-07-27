@@ -109,13 +109,9 @@ fun MeterCard(
         label = "wiggle",
     )
 
-    val cardBg = meterColor?.copy(alpha = 0.13f)
-    val nameColor = meterColor ?: MaterialTheme.colorScheme.onSurface
-
     Box(modifier = modifier.rotate(if (reorderMode) wiggleRotation else 0f)) {
         NeumorphicCard(
             modifier = Modifier.fillMaxWidth(),
-            backgroundColor = cardBg,
             onClick = if (reorderMode) ({}) else onClick,
         ) {
             Column {
@@ -134,7 +130,7 @@ fun MeterCard(
                             meter.name,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = nameColor,
+                            color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -348,7 +344,6 @@ private fun CurrentReadingRow(
         if (trimmed.isEmpty()) return
         val parsed = trimmed.toDoubleOrNull()
         if (parsed != null && parsed < meter.previousReading) {
-            // Reject: current reading lower than previous reading
             hasError = true
             scope.launch {
                 repeat(5) { i ->

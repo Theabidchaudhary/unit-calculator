@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -23,8 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.orwyx.unitcalculator.ui.screens.meters.MetersScreen
 import com.orwyx.unitcalculator.ui.screens.planning.PlanningScreen
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
-import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -38,7 +39,7 @@ fun HomeScaffold(
     var selectedTab by rememberSaveable { mutableStateOf(BottomTab.METERS) }
     val pagerState = rememberPagerState(initialPage = if (selectedTab == BottomTab.METERS) 0 else 1, pageCount = { 2 })
     val scope = rememberCoroutineScope()
-    val hazeState = rememberHazeState()
+    val hazeState = remember { HazeState() }
 
     LaunchedEffect(pagerState.currentPage) {
         val target = if (pagerState.currentPage == 0) BottomTab.METERS else BottomTab.PLANNING
@@ -54,7 +55,6 @@ fun HomeScaffold(
         selectTab(BottomTab.METERS)
     }
 
-    // Content padding accounts for status bar + top app bar (64dp standard) and nav bar
     val statusBarPadding = WindowInsets.statusBars.asPaddingValues()
     val navBarPadding    = WindowInsets.navigationBars.asPaddingValues()
     val contentPadding   = PaddingValues(
@@ -63,7 +63,6 @@ fun HomeScaffold(
     )
 
     Box(Modifier.fillMaxSize()) {
-        // Full-screen pager is the haze source — content scrolls behind both bars
         HorizontalPager(
             state    = pagerState,
             modifier = Modifier
@@ -81,7 +80,6 @@ fun HomeScaffold(
             }
         }
 
-        // Frosted glass top bar — hazeChild reads what is behind it and blurs it
         AppTopBar(
             title      = if (selectedTab == BottomTab.METERS) "Unit Calculator" else "Planning",
             hazeState  = hazeState,
@@ -89,7 +87,6 @@ fun HomeScaffold(
             modifier   = Modifier.align(Alignment.TopCenter),
         )
 
-        // Frosted glass bottom nav
         GlassBottomNav(
             currentRoute  = selectedTab.route,
             hazeState     = hazeState,

@@ -47,7 +47,6 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeChild
 
-// Smooth ease-in-out: starts slow, accelerates, then decelerates to a stop
 private val SmoothEasing = CubicBezierEasing(0.65f, 0f, 0.35f, 1f)
 
 @Composable
@@ -78,18 +77,17 @@ fun GlassBottomNav(
                 spotColor    = primary.copy(alpha = 0.22f),
             )
             .clip(MaterialTheme.shapes.extraLarge)
-            // Real frosted glass: samples the content behind this composable and blurs it
             .hazeChild(
                 state = hazeState,
                 style = HazeStyle(
                     backgroundColor = barColor,
+                    tint            = null,
                     blurRadius      = 24.dp,
                 ),
             )
             .height(72.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
-        // Border ring over the blurred background
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -107,7 +105,6 @@ fun GlassBottomNav(
             label         = "navIndicatorOffset",
         )
 
-        // Selected pill indicator
         Box(
             modifier = Modifier
                 .offset(x = indicatorOffset)
@@ -119,7 +116,6 @@ fun GlassBottomNav(
                 .background(primary),
         )
 
-        // Tab icons + labels
         Row(
             modifier              = Modifier.fillMaxSize().padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -156,7 +152,6 @@ private fun NavTab(tab: BottomTab, selected: Boolean, onClick: () -> Unit, modif
     ) {
         Icon(tab.icon, contentDescription = tab.label, tint = contentColor, modifier = Modifier.size(22.dp))
 
-        // Label slides in when selected; slides out when deselected
         AnimatedVisibility(
             visible = selected,
             enter   = fadeIn(tween(280, easing = SmoothEasing)) +
