@@ -9,6 +9,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,14 +32,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SelectableDates
@@ -224,40 +223,39 @@ private fun CloseDateIconButton(
     val hasDate     = closedDate != null
     val tint        = if (hasDate) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurfaceVariant
     val bg          = if (hasDate) StatusRed else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-    Box {
-        Box(
-            modifier = Modifier
-                .height(58.dp)
-                .width(calendarWidth)
-                .clip(MaterialTheme.shapes.medium)
-                .background(bg)
-                .pressScale(interaction, pressedScale = 0.88f)
-                .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
-                .padding(horizontal = 8.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (hasDate) {
-                Text(
-                    text       = closedDate!!.format(DateTimeFormatter.ofPattern("d MMM")),
-                    style      = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color      = tint,
-                    textAlign  = TextAlign.Center,
-                    maxLines   = 1,
-                )
-            } else {
-                Icon(
-                    Icons.Rounded.CalendarMonth,
-                    contentDescription = "Set closed date",
-                    tint     = tint,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
-        }
+    Box(
+        modifier = Modifier
+            .height(58.dp)
+            .width(calendarWidth)
+            .clip(MaterialTheme.shapes.medium)
+            .background(bg)
+            .pressScale(interaction, pressedScale = 0.88f)
+            .combinedClickable(
+                interactionSource = interaction,
+                indication        = null,
+                enabled           = enabled,
+                onClick           = onClick,
+                onDoubleClick     = { if (hasDate) onClear() },
+            )
+            .padding(horizontal = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
         if (hasDate) {
-            IconButton(onClick = onClear, modifier = Modifier.align(Alignment.TopEnd).size(20.dp)) {
-                Icon(Icons.Rounded.Close, contentDescription = "Clear closed date", tint = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f), modifier = Modifier.size(12.dp))
-            }
+            Text(
+                text       = closedDate!!.format(DateTimeFormatter.ofPattern("d MMM")),
+                style      = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color      = tint,
+                textAlign  = TextAlign.Center,
+                maxLines   = 1,
+            )
+        } else {
+            Icon(
+                Icons.Rounded.CalendarMonth,
+                contentDescription = "Set closed date",
+                tint     = tint,
+                modifier = Modifier.size(24.dp),
+            )
         }
     }
 }

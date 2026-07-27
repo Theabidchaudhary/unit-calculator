@@ -63,7 +63,11 @@ class PlanningEngine(
             val actualEnd = meter.closedDate?.let { closed ->
                 val closedDay = (ChronoUnit.DAYS.between(cycle.start, closed).toInt() + 1).coerceIn(1, totalDays)
                 if (closedDay >= currentStart) closedDay else plannedEnd
-            } ?: plannedEnd
+            } ?: run {
+                // If meter is unclosed and today is past planned end, extend through today
+                if (cycle.elapsedDays > plannedEnd) cycle.elapsedDays.coerceAtMost(totalDays)
+                else plannedEnd
+            }
             windows.add(MeterWindow(meter = meter, startDay = currentStart, endDay = actualEnd))
             currentStart = actualEnd + 1
         }

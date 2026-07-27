@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -78,11 +79,11 @@ fun MeterColorPickerScreen(
                 Spacer(Modifier.height(4.dp))
             }
             items(state.entries) { entry ->
-                val entryIndex      = state.entries.indexOf(entry)
-                // Show a default selection based on position when no color is saved yet
-                val effectiveIndex  = entry.colorIndex ?: (entryIndex % MeterPalette.pickerColors.size)
-                val allUsedIndices  = state.entries.mapNotNull { it.colorIndex }.toSet()
-                val otherUsedIndices = allUsedIndices - (entry.colorIndex?.let { setOf(it) } ?: emptySet())
+                val entryIndex       = state.entries.indexOf(entry)
+                val effectiveIndex   = entry.colorIndex ?: (entryIndex % MeterPalette.pickerColors.size)
+                // Include default-assigned colors as "used" so other meters can't pick them
+                val allEffective     = state.entries.mapIndexed { i, e -> e.colorIndex ?: (i % MeterPalette.pickerColors.size) }.toSet()
+                val otherUsedIndices = allEffective - setOf(effectiveIndex)
 
                 NeumorphicCard(modifier = Modifier.fillMaxWidth()) {
                     Column {
@@ -96,17 +97,19 @@ fun MeterColorPickerScreen(
                             MeterPalette.pickerColors.forEachIndexed { index, color ->
                                 val isSelected   = index == effectiveIndex
                                 val takenByOther = otherUsedIndices.contains(index)
+                                val dotColor     = if (takenByOther) color.copy(alpha = 0.25f) else color
+                                val borderColor  = when {
+                                    takenByOther -> Color.White.copy(alpha = 0.20f)
+                                    isSelected   -> Color.White
+                                    else         -> Color.White.copy(alpha = 0.70f)
+                                }
+                                val borderWidth  = if (isSelected) 2.5.dp else 1.5.dp
                                 Box(
                                     modifier = Modifier
                                         .size(32.dp)
                                         .clip(CircleShape)
-                                        .background(if (takenByOther) color.copy(alpha = 0.25f) else color)
-                                        .then(
-                                            if (isSelected)
-                                                Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
-                                            else
-                                                Modifier
-                                        )
+                                        .background(dotColor)
+                                        .border(borderWidth, borderColor, CircleShape)
                                         .then(
                                             if (!takenByOther)
                                                 Modifier.clickable { viewModel.setColor(entry.meter.id, index) }

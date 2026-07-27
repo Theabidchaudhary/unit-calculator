@@ -22,16 +22,18 @@ import androidx.compose.material.icons.rounded.ElectricMeter
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.Savings
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.orwyx.unitcalculator.ui.theme.pressScale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -221,8 +223,14 @@ private fun DashboardRow(state: MetersUiState, onResetAll: () -> Unit) {
             }
             Spacer(Modifier.height(10.dp))
         }
-        TextButton(onClick = onResetAll, modifier = Modifier.fillMaxWidth()) {
-            Text("Reset cycle", style = MaterialTheme.typography.labelLarge)
+        val resetInteraction = remember { MutableInteractionSource() }
+        Button(
+            onClick           = onResetAll,
+            modifier          = Modifier.fillMaxWidth().height(56.dp).pressScale(resetInteraction),
+            interactionSource = resetInteraction,
+            shape             = MaterialTheme.shapes.extraLarge,
+        ) {
+            Text("Reset Month", style = MaterialTheme.typography.labelLarge)
         }
     }
 }
