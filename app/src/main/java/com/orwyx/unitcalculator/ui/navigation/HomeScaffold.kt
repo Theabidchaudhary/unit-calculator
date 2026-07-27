@@ -3,14 +3,14 @@ package com.orwyx.unitcalculator.ui.navigation
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,9 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.orwyx.unitcalculator.ui.screens.meters.MetersScreen
 import com.orwyx.unitcalculator.ui.screens.planning.PlanningScreen
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScaffold(
     onOpenMeter: (Long) -> Unit,
@@ -36,6 +38,7 @@ fun HomeScaffold(
     var selectedTab by rememberSaveable { mutableStateOf(BottomTab.METERS) }
     val pagerState = rememberPagerState(initialPage = if (selectedTab == BottomTab.METERS) 0 else 1, pageCount = { 2 })
     val scope = rememberCoroutineScope()
+    val hazeState = rememberHazeState()
 
     LaunchedEffect(pagerState.currentPage) {
         val target = if (pagerState.currentPage == 0) BottomTab.METERS else BottomTab.PLANNING
@@ -47,28 +50,51 @@ fun HomeScaffold(
         scope.launch { pagerState.animateScrollToPage(if (tab == BottomTab.METERS) 0 else 1) }
     }
 
-    // Back on planning tab → go to meters tab instead of exiting
     BackHandler(enabled = pagerState.currentPage == 1) {
         selectTab(BottomTab.METERS)
     }
 
-    Scaffold(
-        containerColor = Color.Transparent,
-        contentColor = MaterialTheme.colorScheme.onBackground,
-        topBar = { AppTopBar(title = if (selectedTab == BottomTab.METERS) "Unit Calculator" else "Planning", onSettings = onOpenSettings) },
-    ) { padding ->
-        Box(Modifier.fillMaxSize()) {
-            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), pageSpacing = 0.dp) { page ->
-                when (page) {
-                    0 -> MetersScreen(onOpenMeter = onOpenMeter, onAddMeter = onAddMeter, contentPadding = padding)
-                    1 -> PlanningScreen(
-                        contentPadding = padding,
-                        onOpenColorPicker = onOpenColorPicker,
-                        onNavigateBack = { selectTab(BottomTab.METERS) },
-                    )
-                }
+    // Content padding accounts for status bar + top app bar (64dp standard) and nav bar
+    val statusBarPadding = WindowInsets.statusBars.asPaddingValues()
+    val navBarPadding    = WindowInsets.navigationBars.asPaddingValues()
+    val contentPadding   = PaddingValues(
+        top    = statusBarPadding.calculateTopPadding() + 64.dp,
+        bottom = navBarPadding.calculateBottomPadding(),
+    )
+
+    Box(Modifier.fillMaxSize()) {
+        // Full-screen pager is the haze source — content scrolls behind both bars
+        HorizontalPager(
+            state    = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .haze(hazeState),
+            pageSpacing = 0.dp,
+        ) { page ->
+            when (page) {
+                0 -> MetersScreen(onOpenMeter = onOpenMeter, onAddMeter = onAddMeter, contentPadding = contentPadding)
+                1 -> PlanningScreen(
+                    contentPadding    = contentPadding,
+                    onOpenColorPicker = onOpenColorPicker,
+                    onNavigateBack    = { selectTab(BottomTab.METERS) },
+                )
             }
-            GlassBottomNav(currentRoute = selectedTab.route, onTabSelected = ::selectTab, modifier = Modifier.align(Alignment.BottomCenter))
         }
+
+        // Frosted glass top bar — hazeChild reads what is behind it and blurs it
+        AppTopBar(
+            title      = if (selectedTab == BottomTab.METERS) "Unit Calculator" else "Planning",
+            hazeState  = hazeState,
+            onSettings = onOpenSettings,
+            modifier   = Modifier.align(Alignment.TopCenter),
+        )
+
+        // Frosted glass bottom nav
+        GlassBottomNav(
+            currentRoute  = selectedTab.route,
+            hazeState     = hazeState,
+            onTabSelected = ::selectTab,
+            modifier      = Modifier.align(Alignment.BottomCenter),
+        )
     }
 }
