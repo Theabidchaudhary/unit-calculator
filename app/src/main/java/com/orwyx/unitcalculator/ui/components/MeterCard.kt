@@ -411,6 +411,8 @@ private fun SafeBudgetChip(meter: Meter, phase: MeterPhase?, remainingDays: Int)
         phase.isPending  -> "Not started yet — waiting for meter ${phase.sequenceIndex}"
         phase.remainingDaysInPhase > 0 ->
             "≈ ${Formatters.units(remaining / phase.remainingDaysInPhase)} units/day (${phase.remainingDaysInPhase}d left in phase)"
+        phase.isActive && remainingDays > 0 ->
+            "≈ ${Formatters.units(remaining / remainingDays)} units/day left to stay safe"
         else -> "${Formatters.units(remaining)} units remaining in phase"
     }
     Text(

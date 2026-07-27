@@ -61,7 +61,7 @@ fun GlassBottomNav(
     val tabs          = BottomTab.entries
     val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceIn(0, tabs.lastIndex)
 
-    val barColor    = if (isDark) Color.Black.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.92f)
+    val barColor    = if (isDark) Color.Black.copy(alpha = 0.96f) else Color.White.copy(alpha = 0.97f)
     val borderAlpha = if (isDark) 0.25f else 0.50f
     val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.28f)
 
@@ -82,7 +82,7 @@ fun GlassBottomNav(
                 style = HazeStyle(
                     backgroundColor = barColor,
                     tint            = null,
-                    blurRadius      = 20.dp,
+                    blurRadius      = 4.dp,
                 ),
             )
             .height(72.dp),
