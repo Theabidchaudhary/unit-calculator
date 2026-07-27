@@ -49,7 +49,7 @@ fun AppTopBar(
                 style = HazeStyle(
                     backgroundColor = barColor,
                     tint            = null,
-                    blurRadius      = 24.dp,
+                    blurRadius      = 48.dp,
                 ),
             ),
     )

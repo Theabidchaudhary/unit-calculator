@@ -61,9 +61,9 @@ fun GlassBottomNav(
     val tabs          = BottomTab.entries
     val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceIn(0, tabs.lastIndex)
 
-    val barColor     = if (isDark) Color.Black.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.72f)
-    val borderAlpha  = if (isDark) 0.25f else 0.50f
-    val shadowColor  = Color.Black.copy(alpha = if (isDark) 0.60f else 0.28f)
+    val barColor    = if (isDark) Color.Black.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.72f)
+    val borderAlpha = if (isDark) 0.25f else 0.50f
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.28f)
 
     BoxWithConstraints(
         modifier = modifier
@@ -82,7 +82,7 @@ fun GlassBottomNav(
                 style = HazeStyle(
                     backgroundColor = barColor,
                     tint            = null,
-                    blurRadius      = 24.dp,
+                    blurRadius      = 48.dp,
                 ),
             )
             .height(72.dp),
@@ -137,7 +137,7 @@ fun GlassBottomNav(
 private fun NavTab(tab: BottomTab, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val contentColor by animateColorAsState(
         targetValue   = if (selected) MaterialTheme.colorScheme.onPrimary
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        else          MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = tween(280, easing = SmoothEasing),
         label         = "tabContent",
     )

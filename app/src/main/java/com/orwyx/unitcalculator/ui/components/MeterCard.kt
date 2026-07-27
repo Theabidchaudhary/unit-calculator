@@ -1,20 +1,13 @@
 package com.orwyx.unitcalculator.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,23 +17,23 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -48,7 +41,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,9 +54,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.IntOffset
 import com.orwyx.unitcalculator.core.util.Formatters
 import com.orwyx.unitcalculator.domain.model.Meter
 import com.orwyx.unitcalculator.domain.model.MeterPhase
@@ -72,12 +62,10 @@ import com.orwyx.unitcalculator.ui.theme.ConsumptionColors
 import com.orwyx.unitcalculator.ui.theme.StatusDeepGreen
 import com.orwyx.unitcalculator.ui.theme.StatusRed
 import com.orwyx.unitcalculator.ui.theme.pressScale
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.roundToInt
 
 @Composable
 fun MeterCard(
@@ -88,7 +76,7 @@ fun MeterCard(
     allowDecimals: Boolean,
     isActive: Boolean,
     isClosed: Boolean,
-    meterColor: androidx.compose.ui.graphics.Color? = null,
+    cycleStartDate: LocalDate,
     modifier: Modifier = Modifier,
     reorderMode: Boolean = false,
     onClick: () -> Unit,
@@ -103,7 +91,7 @@ fun MeterCard(
         initialValue = if (sequenceNumber % 2 == 0) -2f else 2f,
         targetValue  = if (sequenceNumber % 2 == 0) 2f else -2f,
         animationSpec = infiniteRepeatable(
-            animation = tween(150, easing = LinearEasing),
+            animation  = tween(150, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "wiggle",
@@ -112,27 +100,22 @@ fun MeterCard(
     Box(modifier = modifier.rotate(if (reorderMode) wiggleRotation else 0f)) {
         NeumorphicCard(
             modifier = Modifier.fillMaxWidth(),
-            onClick = if (reorderMode) ({}) else onClick,
+            onClick  = if (reorderMode) ({}) else onClick,
         ) {
             Column {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier             = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment    = Alignment.CenterVertically,
                 ) {
-                    Column(Modifier.weight(1f).padding(end = 8.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(meter.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        }
                         Text(
                             "Meter $sequenceNumber",
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            meter.name,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     StatusBadge(meter.status)
@@ -140,72 +123,52 @@ fun MeterCard(
                     PowerButton(
                         isActive = isActive,
                         isClosed = isClosed,
-                        onClick = if (reorderMode) ({}) else onToggleActive,
+                        onClick  = if (reorderMode) ({}) else onToggleActive,
                     )
                 }
 
-                AnimatedVisibility(
-                    visible = reorderMode,
-                    enter = expandVertically(animationSpec = tween(280, easing = EaseInOut)),
-                    exit  = shrinkVertically(animationSpec = tween(280, easing = EaseInOut)),
-                ) {
-                    Text(
-                        text = Formatters.maskedReference(meter.referenceNumber),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 6.dp),
-                    )
+                Spacer(Modifier.height(6.dp))
+                var revealed by remember(meter.id) { mutableStateOf(false) }
+                Text(
+                    text     = if (revealed) meter.referenceNumber else Formatters.maskedReference(meter.referenceNumber),
+                    style    = MaterialTheme.typography.bodyMedium,
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clickable(enabled = !reorderMode) { revealed = !revealed },
+                )
+
+                Spacer(Modifier.height(16.dp))
+                AnimatedProgressBar(fraction = meter.usedFraction)
+
+                Spacer(Modifier.height(12.dp))
+                SafeBudgetChip(meter = meter, phase = phase, remainingDays = remainingDays)
+
+                Spacer(Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Stat("Consumed",  Formatters.units(meter.consumedUnits))
+                    Stat("Remaining", Formatters.units(meter.remainingUnits))
+                    Stat("Used",      Formatters.percent(meter.usedFraction), valueColor = ConsumptionColors.colorFor(meter.usedFraction))
+                    Stat("Target",    Formatters.units(meter.targetLimit))
                 }
 
-                AnimatedVisibility(
-                    visible = !reorderMode,
-                    enter = expandVertically(animationSpec = tween(280, easing = EaseInOut)),
-                    exit  = shrinkVertically(animationSpec = tween(280, easing = EaseInOut)),
-                ) {
-                    Column {
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            text = Formatters.maskedReference(meter.referenceNumber),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-
-                        Spacer(Modifier.height(16.dp))
-                        AnimatedProgressBar(fraction = meter.usedFraction)
-
-                        Spacer(Modifier.height(12.dp))
-                        SafeBudgetChip(meter = meter, phase = phase, remainingDays = remainingDays, isActive = isActive, isClosed = isClosed)
-
-                        Spacer(Modifier.height(12.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Stat("Consumed",  Formatters.units(meter.consumedUnits))
-                            Stat("Remaining", Formatters.units(meter.remainingUnits))
-                            Stat("Used",      Formatters.percent(meter.usedFraction), valueColor = ConsumptionColors.colorFor(meter.usedFraction))
-                            Stat("Target",    Formatters.units(meter.targetLimit))
-                        }
-
-                        Spacer(Modifier.height(14.dp))
-                        CurrentReadingRow(
-                            meter = meter,
-                            allowDecimals = allowDecimals,
-                            isClosed = isClosed,
-                            isReorderMode = reorderMode,
-                            onSubmit = onCurrentReadingSubmit,
-                            onCalendarClick = { showCloseDatePicker = true },
-                            onClearClosedDate = { onSetClosedDate(null) },
-                        )
-                    }
-                }
+                Spacer(Modifier.height(14.dp))
+                CurrentReadingRow(
+                    meter         = meter,
+                    allowDecimals = allowDecimals,
+                    isClosed      = isClosed || reorderMode,
+                    onSubmit      = onCurrentReadingSubmit,
+                    onCalendarClick    = { if (!reorderMode) showCloseDatePicker = true },
+                    onClearClosedDate  = { if (!reorderMode) onSetClosedDate(null) },
+                )
             }
         }
     }
 
     if (showCloseDatePicker) {
         CloseDatePickerDialog(
-            initialDate = meter.closedDate,
-            onConfirm = { date -> onSetClosedDate(date); showCloseDatePicker = false },
-            onDismiss = { showCloseDatePicker = false },
+            initialDate    = meter.closedDate,
+            cycleStartDate = cycleStartDate,
+            onConfirm      = { date -> onSetClosedDate(date); showCloseDatePicker = false },
+            onDismiss      = { showCloseDatePicker = false },
         )
     }
 }
@@ -230,82 +193,81 @@ private fun PowerButton(isActive: Boolean, isClosed: Boolean, onClick: () -> Uni
         Icon(
             Icons.Rounded.PowerSettingsNew,
             contentDescription = if (isClosed) "Closed meter" else if (isActive) "Active meter" else "Switch meter on",
-            tint = tint,
+            tint     = tint,
             modifier = Modifier.size(20.dp),
         )
     }
 }
 
 @Composable
-private fun ActivePill() {
-    Row(
-        modifier = Modifier.clip(MaterialTheme.shapes.small).background(StatusDeepGreen.copy(alpha = 0.14f)).padding(horizontal = 8.dp, vertical = 3.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(6.dp).clip(MaterialTheme.shapes.small).background(StatusDeepGreen))
-        Spacer(Modifier.size(4.dp))
-        Text("Active", style = MaterialTheme.typography.labelSmall, color = StatusDeepGreen, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun ClosedPill() {
-    Row(
-        modifier = Modifier.clip(MaterialTheme.shapes.small).background(StatusRed.copy(alpha = 0.14f)).padding(horizontal = 8.dp, vertical = 3.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(6.dp).clip(MaterialTheme.shapes.small).background(StatusRed))
-        Spacer(Modifier.size(4.dp))
-        Text("Closed", style = MaterialTheme.typography.labelSmall, color = StatusRed, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
 private fun CloseDateIconButton(closedDate: LocalDate?, enabled: Boolean, onClick: () -> Unit, onClear: () -> Unit) {
-    val fmt = remember { DateTimeFormatter.ofPattern("d MMM") }
+    val fmt         = remember { DateTimeFormatter.ofPattern("d MMM") }
     val interaction = remember { MutableInteractionSource() }
-    val hasDate = closedDate != null
-    val bg = if (hasDate) StatusRed else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-    val contentColor = if (hasDate) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-    Box(
-        modifier = Modifier
-            .width(72.dp)
-            .height(52.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .background(bg)
-            .pressScale(interaction, pressedScale = 0.88f)
-            .combinedClickable(
-                interactionSource = interaction,
-                indication = null,
-                enabled = enabled,
-                onClick = onClick,
-                onDoubleClick = { if (hasDate) onClear() },
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (hasDate) {
-            Text(
-                text = closedDate!!.format(fmt),
-                style = MaterialTheme.typography.titleMedium,
-                color = contentColor,
-                fontWeight = FontWeight.Bold,
+    val hasDate     = closedDate != null
+    val tint        = if (hasDate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val bg          = if (hasDate) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    Box {
+        Column(
+            modifier = Modifier
+                .clip(MaterialTheme.shapes.small)
+                .background(bg)
+                .pressScale(interaction, pressedScale = 0.88f)
+                .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(
+                Icons.Rounded.CalendarMonth,
+                contentDescription = if (hasDate) "Closed ${closedDate!!.format(fmt)}" else "Set closed date",
+                tint     = tint,
+                modifier = Modifier.size(18.dp),
             )
-        } else {
-            Icon(Icons.Rounded.CalendarMonth, contentDescription = "Set closed date", tint = contentColor, modifier = Modifier.size(22.dp))
+            if (hasDate) {
+                Text(closedDate!!.format(fmt), style = MaterialTheme.typography.labelSmall, color = tint, fontWeight = FontWeight.Medium)
+            }
+        }
+        if (hasDate) {
+            IconButton(onClick = onClear, modifier = Modifier.align(Alignment.TopEnd).size(16.dp)) {
+                Icon(Icons.Rounded.Close, contentDescription = "Clear closed date", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CloseDatePickerDialog(initialDate: LocalDate?, onConfirm: (LocalDate) -> Unit, onDismiss: () -> Unit) {
-    val initialMillis = initialDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
-        ?: System.currentTimeMillis()
-    val state = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+private fun CloseDatePickerDialog(
+    initialDate: LocalDate?,
+    cycleStartDate: LocalDate,
+    onConfirm: (LocalDate) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val today         = LocalDate.now()
+    val initialMillis = (initialDate ?: today)
+        .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+    // Dates selectable: from billing cycle start to today (no future dates)
+    val selectableDates = remember(cycleStartDate, today) {
+        val minDay = cycleStartDate.toEpochDay()
+        val maxDay = today.toEpochDay()
+        object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                val day = utcTimeMillis / 86_400_000L
+                return day in minDay..maxDay
+            }
+            override fun isSelectableYear(year: Int): Boolean =
+                year in cycleStartDate.year..today.year
+        }
+    }
+
+    val state = rememberDatePickerState(
+        initialSelectedDateMillis = initialMillis,
+        selectableDates           = selectableDates,
+    )
+
     DatePickerDialog(
         onDismissRequest = onDismiss,
-        confirmButton = {
+        confirmButton    = {
             TextButton(onClick = {
                 state.selectedDateMillis?.let { ms ->
                     onConfirm(Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate())
@@ -321,98 +283,57 @@ private fun CurrentReadingRow(
     meter: Meter,
     allowDecimals: Boolean,
     isClosed: Boolean,
-    isReorderMode: Boolean,
     onSubmit: (Meter, String) -> Unit,
     onCalendarClick: () -> Unit,
     onClearClosedDate: () -> Unit,
 ) {
-    val fieldDisabled = isClosed || isReorderMode
     var fieldValue by rememberSaveable(meter.id, meter.currentReading) {
         mutableStateOf(formatReading(meter.currentReading, allowDecimals))
     }
-    var hasError by remember { mutableStateOf(false) }
-    val shakeOffset = remember { Animatable(0f) }
-    val scope = rememberCoroutineScope()
-    val keyboard = LocalSoftwareKeyboardController.current
-    val focusManager = LocalFocusManager.current
+    val keyboard      = LocalSoftwareKeyboardController.current
+    val focusManager  = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     val buttonInteraction = remember { MutableInteractionSource() }
 
     fun submit() {
-        if (fieldDisabled) return
+        if (isClosed) return
         val trimmed = fieldValue.trim()
         if (trimmed.isEmpty()) return
-        val parsed = trimmed.toDoubleOrNull()
-        if (parsed != null && parsed < meter.previousReading) {
-            hasError = true
-            scope.launch {
-                repeat(5) { i ->
-                    shakeOffset.animateTo(if (i % 2 == 0) 10f else -10f, tween(55))
-                }
-                shakeOffset.animateTo(0f, tween(55))
-            }
-            return
-        }
-        hasError = false
         onSubmit(meter, trimmed)
         keyboard?.hide()
         focusManager.clearFocus()
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        modifier             = Modifier.fillMaxWidth(),
+        verticalAlignment    = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CloseDateIconButton(
             closedDate = meter.closedDate,
-            enabled = !isReorderMode,
-            onClick = onCalendarClick,
-            onClear = onClearClosedDate,
+            enabled    = !isClosed,
+            onClick    = onCalendarClick,
+            onClear    = onClearClosedDate,
         )
         OutlinedTextField(
-            value = fieldValue,
-            onValueChange = {
-                fieldValue = it
-                hasError = false
-            },
-            label = {
-                Text(
-                    "Current reading",
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            singleLine = true,
-            enabled = !fieldDisabled,
-            shape = MaterialTheme.shapes.medium,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center),
+            value          = fieldValue,
+            onValueChange  = { fieldValue = it },
+            label          = { Text("Current reading") },
+            singleLine     = true,
+            enabled        = !isClosed,
+            shape          = MaterialTheme.shapes.medium,
+            textStyle      = MaterialTheme.typography.bodyMedium,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }),
-            isError = hasError,
-            colors = if (hasError) OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = StatusRed,
-                unfocusedBorderColor = StatusRed,
-                focusedLabelColor = StatusRed,
-                unfocusedLabelColor = StatusRed,
-                focusedTextColor = StatusRed,
-                unfocusedTextColor = StatusRed,
-            ) else OutlinedTextFieldDefaults.colors(),
-            modifier = Modifier
-                .weight(1f)
-                .heightIn(min = 52.dp)
-                .focusRequester(focusRequester)
-                .offset { IntOffset(shakeOffset.value.roundToInt(), 0) },
+            modifier        = Modifier.weight(1f).heightIn(min = 58.dp).focusRequester(focusRequester),
         )
         Button(
-            onClick = { submit() },
+            onClick           = { submit() },
             interactionSource = buttonInteraction,
-            enabled = !fieldDisabled,
-            modifier = Modifier.width(72.dp).height(52.dp).pressScale(buttonInteraction),
-            shape = MaterialTheme.shapes.medium,
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+            enabled           = !isClosed,
+            modifier          = Modifier.height(58.dp).pressScale(buttonInteraction),
+            shape             = MaterialTheme.shapes.medium,
+            contentPadding    = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
         ) { Text("Calculate", style = MaterialTheme.typography.labelMedium) }
     }
 }
@@ -423,33 +344,26 @@ private fun formatReading(value: Double, allowDecimals: Boolean): String {
 }
 
 @Composable
-private fun SafeBudgetChip(meter: Meter, phase: MeterPhase?, remainingDays: Int, isActive: Boolean, isClosed: Boolean) {
+private fun SafeBudgetChip(meter: Meter, phase: MeterPhase?, remainingDays: Int) {
     val remaining = meter.remainingUnits
-    val color = ConsumptionColors.colorFor(meter.usedFraction)
+    val color     = ConsumptionColors.colorFor(meter.usedFraction)
     val text = when {
-        isClosed -> "${Formatters.units(remaining)} units left"
-        !isActive -> if (phase != null && phase.isPending && phase.sequenceIndex > 0)
-            "Waiting for Meter ${phase.sequenceIndex}"
-        else
-            "${Formatters.units(remaining)} units left"
-        remaining <= 0.0 -> "Over by ${Formatters.units(-remaining)} units"
+        remaining <= 0.0 -> "Over limit by ${Formatters.units(-remaining)} units"
         phase == null -> {
-            if (remainingDays > 0) "Stay under ${Formatters.units(remaining / remainingDays)} units/day - $remainingDays days left"
-            else "${Formatters.units(remaining)} units left"
+            if (remainingDays > 0) "≈ ${Formatters.units(remaining / remainingDays)} units/day left to stay safe"
+            else "${Formatters.units(remaining)} units left this cycle"
         }
-        phase.isComplete -> "${Formatters.units(remaining)} units left"
+        phase.isComplete -> "${Formatters.units(remaining)} units left until threshold"
+        phase.isPending  -> "Not started yet — waiting for meter ${phase.sequenceIndex}"
         phase.remainingDaysInPhase > 0 ->
-            "Stay under ${Formatters.units(remaining / phase.remainingDaysInPhase)} units/day - ${phase.remainingDaysInPhase} days left"
-        else -> "${Formatters.units(remaining)} units left"
+            "≈ ${Formatters.units(remaining / phase.remainingDaysInPhase)} units/day (${phase.remainingDaysInPhase}d left in phase)"
+        else -> "${Formatters.units(remaining)} units remaining in phase"
     }
     Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = color,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+        text     = text,
+        style    = MaterialTheme.typography.labelLarge,
+        color    = color,
         modifier = Modifier
-            .fillMaxWidth()
             .clip(MaterialTheme.shapes.small)
             .background(color.copy(alpha = 0.12f))
             .padding(horizontal = 12.dp, vertical = 7.dp),
