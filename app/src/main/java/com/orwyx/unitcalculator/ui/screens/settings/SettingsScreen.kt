@@ -50,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -182,10 +183,18 @@ fun SettingsScreen(
                                         modifier = Modifier
                                             .weight(1f)
                                             .aspectRatio(1f)
+                                            .then(
+                                                if (selected) Modifier.shadow(
+                                                    elevation    = 6.dp,
+                                                    shape        = CircleShape,
+                                                    ambientColor = Color.Black.copy(alpha = 0.35f),
+                                                    spotColor    = Color.Black.copy(alpha = 0.45f),
+                                                ) else Modifier
+                                            )
                                             .clip(CircleShape)
                                             .background(accentHue)
                                             .then(
-                                                if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                                                if (selected) Modifier.border(3.dp, Color.White, CircleShape)
                                                 else Modifier
                                             )
                                             .clickable { viewModel.setAccentColor(accent) },

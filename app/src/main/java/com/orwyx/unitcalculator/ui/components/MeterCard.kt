@@ -235,8 +235,8 @@ private fun CloseDateIconButton(
             .combinedClickable(
                 interactionSource = interaction,
                 indication        = null,
-                enabled           = enabled,
-                onClick           = onClick,
+                enabled           = true,
+                onClick           = { if (enabled) onClick() },
                 onDoubleClick     = { if (hasDate) onClear() },
             )
             .padding(horizontal = 8.dp),

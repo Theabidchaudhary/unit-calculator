@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -107,6 +108,14 @@ fun MeterColorPickerScreen(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .aspectRatio(1f)
+                                                .then(
+                                                    if (isSelected) Modifier.shadow(
+                                                        elevation    = 6.dp,
+                                                        shape        = CircleShape,
+                                                        ambientColor = Color.Black.copy(alpha = 0.35f),
+                                                        spotColor    = Color.Black.copy(alpha = 0.45f),
+                                                    ) else Modifier
+                                                )
                                                 .clip(CircleShape)
                                                 .background(dotColor)
                                                 .then(

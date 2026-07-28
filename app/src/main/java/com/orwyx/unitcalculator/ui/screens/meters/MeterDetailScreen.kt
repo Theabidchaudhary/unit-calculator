@@ -138,6 +138,15 @@ fun MeterDetailScreen(
             item {
                 val isClosed = meter.closedDate != null
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(
+                        onClick = { meter?.let { onEdit(it.id) } },
+                        enabled = meter?.closedDate == null,
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = MaterialTheme.shapes.large,
+                    ) {
+                        Icon(Icons.Rounded.Edit, contentDescription = null)
+                        Text(" Edit")
+                    }
                     val resetInteraction = remember { MutableInteractionSource() }
                     Button(
                         onClick = { showReset = true },
@@ -152,15 +161,6 @@ fun MeterDetailScreen(
                         Icon(Icons.Rounded.RestartAlt, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text("Reset Month", style = MaterialTheme.typography.labelLarge)
-                    }
-                    OutlinedButton(
-                        onClick = { meter?.let { onEdit(it.id) } },
-                        enabled = meter?.closedDate == null,
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = MaterialTheme.shapes.large,
-                    ) {
-                        Icon(Icons.Rounded.Edit, contentDescription = null)
-                        Text(" Edit")
                     }
                 }
             }
