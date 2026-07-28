@@ -6,10 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +31,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -40,7 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.orwyx.unitcalculator.ui.components.NeumorphicCard
 import com.orwyx.unitcalculator.ui.theme.MeterPalette
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MeterColorPickerScreen(
     onBack: () -> Unit,
@@ -89,34 +91,51 @@ fun MeterColorPickerScreen(
                     Column {
                         Text(entry.meter.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         Spacer(Modifier.height(10.dp))
-                        FlowRow(
-                            maxItemsInEachRow     = 7,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement   = Arrangement.spacedBy(10.dp),
-                        ) {
-                            MeterPalette.pickerColors.forEachIndexed { index, color ->
-                                val isSelected   = index == effectiveIndex
-                                val takenByOther = otherUsedIndices.contains(index)
-                                val dotColor     = if (takenByOther) color.copy(alpha = 0.25f) else color
-                                val borderColor  = when {
-                                    takenByOther -> Color.White.copy(alpha = 0.20f)
-                                    isSelected   -> Color.White
-                                    else         -> Color.White.copy(alpha = 0.70f)
+                        val colors = MeterPalette.pickerColors
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            colors.chunked(7).forEachIndexed { rowIdx, rowColors ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    rowColors.forEachIndexed { colIdx, color ->
+                                        val index        = rowIdx * 7 + colIdx
+                                        val isSelected   = index == effectiveIndex
+                                        val takenByOther = otherUsedIndices.contains(index)
+                                        val dotColor     = if (takenByOther) color.copy(alpha = 0.25f) else color
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .aspectRatio(1f)
+                                                .clip(CircleShape)
+                                                .background(dotColor)
+                                                .then(
+                                                    if (isSelected)
+                                                        Modifier.border(2.5.dp, Color.White, CircleShape)
+                                                    else Modifier
+                                                )
+                                                .then(
+                                                    if (!takenByOther)
+                                                        Modifier.clickable { viewModel.setColor(entry.meter.id, index) }
+                                                    else Modifier
+                                                ),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            if (isSelected) {
+                                                Icon(
+                                                    Icons.Rounded.Check,
+                                                    contentDescription = null,
+                                                    tint     = Color.White,
+                                                    modifier = Modifier.size(14.dp),
+                                                )
+                                            }
+                                        }
+                                    }
+                                    // fill remaining slots in last row
+                                    repeat(7 - rowColors.size) {
+                                        Spacer(Modifier.weight(1f).aspectRatio(1f))
+                                    }
                                 }
-                                val borderWidth  = if (isSelected) 2.5.dp else 1.5.dp
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(dotColor)
-                                        .border(borderWidth, borderColor, CircleShape)
-                                        .then(
-                                            if (!takenByOther)
-                                                Modifier.clickable { viewModel.setColor(entry.meter.id, index) }
-                                            else
-                                                Modifier
-                                        ),
-                                )
                             }
                         }
                     }

@@ -221,21 +221,21 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(12.dp))
-                    // 4-column grid: 8 rows × 4 cols = 32 slots, only 1 empty at the end
+                    // 7-column grid: 5 rows × 7 = 35 slots, days 1-31 + 4 empty
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        (0..7).forEach { rowIdx ->
+                        (0..4).forEach { rowIdx ->
                             Row(
                                 modifier              = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                (1..4).forEach { colIdx ->
-                                    val day = rowIdx * 4 + colIdx
+                                (0..6).forEach { colIdx ->
+                                    val day = rowIdx * 7 + colIdx + 1
                                     if (day <= 31) {
                                         val selected = settings.readingDate == day
                                         Box(
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .aspectRatio(1.4f)
+                                                .aspectRatio(1f)
                                                 .clip(MaterialTheme.shapes.small)
                                                 .background(
                                                     if (selected) MaterialTheme.colorScheme.primary
@@ -246,14 +246,14 @@ fun SettingsScreen(
                                         ) {
                                             Text(
                                                 day.toString(),
-                                                style      = MaterialTheme.typography.labelMedium,
+                                                style      = MaterialTheme.typography.labelSmall,
                                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                                                 color      = if (selected) MaterialTheme.colorScheme.onPrimary
                                                              else MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
                                         }
                                     } else {
-                                        Spacer(Modifier.weight(1f).aspectRatio(1.4f))
+                                        Spacer(Modifier.weight(1f).aspectRatio(1f))
                                     }
                                 }
                             }

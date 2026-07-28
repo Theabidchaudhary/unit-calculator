@@ -82,7 +82,7 @@ fun GlassBottomNav(
                 style = HazeStyle(
                     backgroundColor = barColor,
                     tint            = null,
-                    blurRadius      = 20.dp,
+                    blurRadius      = 40.dp,
                 ),
             )
             .height(72.dp),

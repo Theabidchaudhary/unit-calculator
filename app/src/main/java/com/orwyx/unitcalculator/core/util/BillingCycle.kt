@@ -25,21 +25,23 @@ data class BillingCycle(
             today: LocalDate = LocalDate.now(),
             now: LocalTime = LocalTime.now(),
         ): BillingCycle {
-            val day = readingDate.coerceIn(1, 28) // safe across all months
+            val day = readingDate.coerceIn(1, 31)
+            // Effective day for this month (e.g. day 31 in Feb → last day of Feb)
             val startThisMonth = safeWithDayOfMonth(today, day)
-            val isReadingDay = today.dayOfMonth == day
-            // Switch to new cycle if strictly past reading date, or exactly on reading date at/after noon
-            val inNewCycle = today.dayOfMonth > day || (isReadingDay && now.hour >= 12)
-            val start = if (inNewCycle) startThisMonth else startThisMonth.minusMonths(1)
+            val effectiveDay = startThisMonth.dayOfMonth
+            val isReadingDay = today.dayOfMonth == effectiveDay
+            // Half-day rule: first 12 hours of reading date belong to old cycle; noon onwards to new cycle
+            val inNewCycle = today.dayOfMonth > effectiveDay || (isReadingDay && now.hour >= 12)
+            val start = if (inNewCycle) startThisMonth else safeWithDayOfMonth(today.minusMonths(1), day)
             val end = safeWithDayOfMonth(start.plusMonths(1), day)
             return BillingCycle(start = start, end = end, today = today)
         }
 
         /** True if the reading date has passed this month and the user should reset. */
         fun isExpired(readingDate: Int, lastResetEpochDay: Long, today: LocalDate = LocalDate.now()): Boolean {
-            val day = readingDate.coerceIn(1, 28)
-            if (today.dayOfMonth <= day) return false
+            val day = readingDate.coerceIn(1, 31)
             val thisMonthReadingDate = safeWithDayOfMonth(today, day)
+            if (today.dayOfMonth <= thisMonthReadingDate.dayOfMonth) return false
             return lastResetEpochDay < thisMonthReadingDate.toEpochDay()
         }
 
