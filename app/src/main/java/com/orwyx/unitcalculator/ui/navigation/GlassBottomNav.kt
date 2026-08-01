@@ -66,7 +66,7 @@ fun GlassBottomNav(
                 elevation    = 12.dp,
                 shape        = NavShape,
                 ambientColor = Color.Black,
-                spotColor    = Color.Black,
+                spotColor    = Color.Black.copy(alpha = 0.08f),
             )
             .background(MaterialTheme.colorScheme.surface, NavShape)
             .clip(NavShape),
