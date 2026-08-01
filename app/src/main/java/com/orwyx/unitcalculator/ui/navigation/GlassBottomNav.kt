@@ -63,7 +63,7 @@ fun GlassBottomNav(
             .padding(horizontal = 20.dp, vertical = 12.dp)
             .height(72.dp)
             .shadow(
-                elevation    = 12.dp,
+                elevation    = 24.dp,
                 shape        = NavShape,
                 ambientColor = Color.Black,
                 spotColor    = Color.Black.copy(alpha = 0.08f),
