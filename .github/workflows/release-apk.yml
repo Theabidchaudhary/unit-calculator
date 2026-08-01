@@ -42,7 +42,7 @@ jobs:
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk "Unit Calculator.apk"
+        run: cp app/build/outputs/apk/debug/app-debug.apk "Unit-Calculator.apk"
 
       - name: Create GitHub Release with APK
         env:
@@ -55,7 +55,7 @@ jobs:
             "${{ steps.sha.outputs.short }}" \
             "$COMMIT_MSG" > /tmp/release-notes.md
           gh release create latest \
-            "Unit Calculator.apk" \
+            "Unit-Calculator.apk" \
             --title "$TITLE" \
             --notes-file /tmp/release-notes.md \
             --latest
