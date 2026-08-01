@@ -30,7 +30,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,17 +56,22 @@ fun GlassBottomNav(
     val tabs          = BottomTab.entries
     val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceIn(0, tabs.lastIndex)
 
-    Surface(
-        modifier        = modifier
+    BoxWithConstraints(
+        modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
-            .height(72.dp),
-        shape           = NavShape,
-        color           = MaterialTheme.colorScheme.surface,
-        shadowElevation = 12.dp,
+            .height(72.dp)
+            .shadow(
+                elevation    = 16.dp,
+                shape        = NavShape,
+                ambientColor = Color.Black.copy(alpha = 0.22f),
+                spotColor    = Color.Black.copy(alpha = 0.06f),
+            )
+            .background(MaterialTheme.colorScheme.surface, NavShape)
+            .clip(NavShape),
+        contentAlignment = Alignment.CenterStart,
     ) {
-        BoxWithConstraints(contentAlignment = Alignment.CenterStart) {
             val slotWidth = maxWidth / tabs.size
             val indicatorOffset by animateDpAsState(
                 targetValue   = slotWidth * selectedIndex,
@@ -100,7 +104,6 @@ fun GlassBottomNav(
                     )
                 }
             }
-        }
     }
 }
 
