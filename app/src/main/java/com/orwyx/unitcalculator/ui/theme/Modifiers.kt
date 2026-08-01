@@ -29,8 +29,8 @@ fun Modifier.neumorphic(
     val neu = LocalNeuColors.current
     // Light mode: soft black shadows on white for clean Material depth
     // Dark mode: dark navy shadows for layered depth
-    val ambientAlpha = if (neu.isDark) 0.70f else 0.07f
-    val spotAlpha    = if (neu.isDark) 0.50f else 0.16f
+    val ambientAlpha = if (neu.isDark) 0.70f else 0.12f
+    val spotAlpha    = if (neu.isDark) 0.55f else 0.24f
     return this
         .shadow(
             elevation    = elevation,

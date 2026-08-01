@@ -66,6 +66,9 @@ import com.orwyx.unitcalculator.ui.components.SectionHeader
 import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
 import com.orwyx.unitcalculator.ui.theme.frostedBlurBackground
 import com.orwyx.unitcalculator.ui.theme.glassBar
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -311,7 +314,12 @@ fun SettingsScreen(
                         icon     = Icons.Rounded.Upload,
                         title    = "Export backup",
                         subtitle = "Save meters, history and settings to a file",
-                        onClick  = { exportLauncher.launch("unit-calculator-backup.json") },
+                        onClick  = {
+                            val date = LocalDate.now().format(
+                                DateTimeFormatter.ofPattern("dd-MMM-yyyy", Locale.ENGLISH)
+                            )
+                            exportLauncher.launch("UnitCalculator_$date.json")
+                        },
                     )
                     Spacer(Modifier.height(6.dp))
                     ActionRow(

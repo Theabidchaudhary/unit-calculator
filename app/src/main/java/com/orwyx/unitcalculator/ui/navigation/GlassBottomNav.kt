@@ -59,7 +59,7 @@ fun GlassBottomNav(
 
     val barColor    = MaterialTheme.colorScheme.surface
     val borderAlpha = if (isDark) 0.15f else 0.10f
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.12f)
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.65f else 0.20f)
 
     BoxWithConstraints(
         modifier = modifier
