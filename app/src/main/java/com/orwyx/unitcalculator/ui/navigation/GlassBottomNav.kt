@@ -36,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
 import com.orwyx.unitcalculator.ui.theme.neumorphic
 import com.orwyx.unitcalculator.ui.theme.pressScale
 
@@ -49,17 +48,15 @@ fun GlassBottomNav(
     modifier: Modifier = Modifier,
 ) {
     val primary       = MaterialTheme.colorScheme.primary
-    val isDark        = LocalNeuColors.current.isDark
     val tabs          = BottomTab.entries
     val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceIn(0, tabs.lastIndex)
-    val shape         = MaterialTheme.shapes.extraLarge
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
-            .neumorphic(shape = shape as androidx.compose.foundation.shape.RoundedCornerShape, elevation = 8.dp)
+            .neumorphic(shape = RoundedCornerShape(28.dp), elevation = 8.dp)
             .height(72.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
