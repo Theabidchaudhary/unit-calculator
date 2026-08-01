@@ -9,8 +9,6 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -36,12 +34,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
+import com.orwyx.unitcalculator.ui.theme.neumorphic
 import com.orwyx.unitcalculator.ui.theme.pressScale
 
 private val SmoothEasing = CubicBezierEasing(0.65f, 0f, 0.35f, 1f)
@@ -56,37 +52,17 @@ fun GlassBottomNav(
     val isDark        = LocalNeuColors.current.isDark
     val tabs          = BottomTab.entries
     val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceIn(0, tabs.lastIndex)
-
-    val barColor    = MaterialTheme.colorScheme.surface
-    val borderAlpha = if (isDark) 0.15f else 0.10f
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.70f else 0.28f)
+    val shape         = MaterialTheme.shapes.extraLarge
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
-            .shadow(
-                elevation    = 16.dp,
-                shape        = MaterialTheme.shapes.extraLarge,
-                ambientColor = shadowColor,
-                spotColor    = shadowColor,
-            )
-            .clip(MaterialTheme.shapes.extraLarge)
-            .background(barColor)
+            .neumorphic(shape = shape as androidx.compose.foundation.shape.RoundedCornerShape, elevation = 8.dp)
             .height(72.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = borderAlpha),
-                    shape = MaterialTheme.shapes.extraLarge,
-                ),
-        )
-
         val slotWidth = maxWidth / tabs.size
         val indicatorOffset by animateDpAsState(
             targetValue   = slotWidth * selectedIndex,
