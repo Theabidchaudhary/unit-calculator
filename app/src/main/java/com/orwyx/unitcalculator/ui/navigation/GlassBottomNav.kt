@@ -43,16 +43,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
 import com.orwyx.unitcalculator.ui.theme.pressScale
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.hazeChild
 
 private val SmoothEasing = CubicBezierEasing(0.65f, 0f, 0.35f, 1f)
 
 @Composable
 fun GlassBottomNav(
     currentRoute: String?,
-    hazeState: HazeState,
     onTabSelected: (BottomTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -61,9 +57,9 @@ fun GlassBottomNav(
     val tabs          = BottomTab.entries
     val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceIn(0, tabs.lastIndex)
 
-    val barColor    = if (isDark) Color.Black.copy(alpha = 0.82f) else Color.White.copy(alpha = 0.84f)
-    val borderAlpha = if (isDark) 0.25f else 0.50f
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.28f)
+    val barColor    = MaterialTheme.colorScheme.surface
+    val borderAlpha = if (isDark) 0.15f else 0.10f
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.60f else 0.12f)
 
     BoxWithConstraints(
         modifier = modifier
@@ -71,20 +67,13 @@ fun GlassBottomNav(
             .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
             .shadow(
-                elevation    = 18.dp,
+                elevation    = 12.dp,
                 shape        = MaterialTheme.shapes.extraLarge,
                 ambientColor = shadowColor,
-                spotColor    = primary.copy(alpha = 0.22f),
+                spotColor    = shadowColor,
             )
             .clip(MaterialTheme.shapes.extraLarge)
-            .hazeChild(
-                state = hazeState,
-                style = HazeStyle(
-                    backgroundColor = barColor,
-                    tint            = null,
-                    blurRadius      = 40.dp,
-                ),
-            )
+            .background(barColor)
             .height(72.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
@@ -93,7 +82,7 @@ fun GlassBottomNav(
                 .fillMaxSize()
                 .border(
                     width = 1.dp,
-                    color = Color.White.copy(alpha = borderAlpha),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = borderAlpha),
                     shape = MaterialTheme.shapes.extraLarge,
                 ),
         )

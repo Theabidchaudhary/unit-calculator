@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -26,8 +25,6 @@ import androidx.compose.ui.unit.dp
 import com.orwyx.unitcalculator.ui.components.AddMeterFab
 import com.orwyx.unitcalculator.ui.screens.meters.MetersScreen
 import com.orwyx.unitcalculator.ui.screens.planning.PlanningScreen
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.haze
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -41,7 +38,6 @@ fun HomeScaffold(
     var selectedTab by rememberSaveable { mutableStateOf(BottomTab.METERS) }
     val pagerState  = rememberPagerState(initialPage = if (selectedTab == BottomTab.METERS) 0 else 1, pageCount = { 2 })
     val scope       = rememberCoroutineScope()
-    val hazeState   = remember { HazeState() }
 
     // Padding so each screen's list doesn't hide under the floating bars
     val statusBarPadding = WindowInsets.statusBars.asPaddingValues()
@@ -62,10 +58,9 @@ fun HomeScaffold(
     }
 
     Box(Modifier.fillMaxSize()) {
-        // Full-screen pager is the haze source — bars blur whatever scrolls behind them
         HorizontalPager(
             state       = pagerState,
-            modifier    = Modifier.fillMaxSize().haze(hazeState),
+            modifier    = Modifier.fillMaxSize(),
             pageSpacing = 0.dp,
         ) { page ->
             when (page) {
@@ -81,7 +76,6 @@ fun HomeScaffold(
 
         AppTopBar(
             title      = if (selectedTab == BottomTab.METERS) "Unit Calculator" else "Planning",
-            hazeState  = hazeState,
             onSettings = onOpenSettings,
             modifier   = Modifier.align(Alignment.TopCenter),
         )
@@ -98,7 +92,6 @@ fun HomeScaffold(
 
         GlassBottomNav(
             currentRoute  = selectedTab.route,
-            hazeState     = hazeState,
             onTabSelected = ::selectTab,
             modifier      = Modifier.align(Alignment.BottomCenter),
         )

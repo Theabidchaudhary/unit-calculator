@@ -12,25 +12,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.orwyx.unitcalculator.ui.theme.LocalNeuColors
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.hazeChild
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppTopBar(
     title: String,
-    hazeState: HazeState,
     onSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isDark   = LocalNeuColors.current.isDark
-    val barColor = if (isDark) Color.Black.copy(alpha = 0.82f) else Color.White.copy(alpha = 0.84f)
-
     CenterAlignedTopAppBar(
         title   = { Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge) },
         actions = {
@@ -39,21 +29,12 @@ fun AppTopBar(
             }
         },
         colors  = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor            = Color.Transparent,
-            scrolledContainerColor    = Color.Transparent,
+            containerColor            = MaterialTheme.colorScheme.surface,
+            scrolledContainerColor    = MaterialTheme.colorScheme.surface,
             titleContentColor         = MaterialTheme.colorScheme.onSurface,
             actionIconContentColor    = MaterialTheme.colorScheme.onSurface,
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
         ),
-        modifier = modifier
-            .fillMaxWidth()
-            .hazeChild(
-                state = hazeState,
-                style = HazeStyle(
-                    backgroundColor = barColor,
-                    tint            = null,
-                    blurRadius      = 40.dp,
-                ),
-            ),
+        modifier = modifier.fillMaxWidth(),
     )
 }
