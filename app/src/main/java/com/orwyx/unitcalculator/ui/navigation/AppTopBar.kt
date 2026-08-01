@@ -1,6 +1,9 @@
 package com.orwyx.unitcalculator.ui.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -26,28 +29,32 @@ fun AppTopBar(
     modifier: Modifier = Modifier,
 ) {
     val isDark      = LocalNeuColors.current.isDark
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.55f else 0.14f)
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.55f else 0.18f)
+    val surface     = MaterialTheme.colorScheme.surface
 
-    CenterAlignedTopAppBar(
-        title   = { Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge) },
-        actions = {
-            IconButton(onClick = onSettings) {
-                Icon(Icons.Rounded.Settings, contentDescription = "Settings")
-            }
-        },
-        colors  = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor            = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor    = MaterialTheme.colorScheme.surface,
-            titleContentColor         = MaterialTheme.colorScheme.onSurface,
-            actionIconContentColor    = MaterialTheme.colorScheme.onSurface,
-            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-        ),
+    // Wrap in a Box so the shadow is drawn on the outer container — TopAppBar clips its own modifier shadow
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(
-                elevation    = 8.dp,
-                ambientColor = shadowColor,
-                spotColor    = shadowColor,
+            .wrapContentHeight()
+            .shadow(elevation = 8.dp, ambientColor = shadowColor, spotColor = shadowColor)
+            .background(surface),
+    ) {
+        CenterAlignedTopAppBar(
+            title   = { Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge) },
+            actions = {
+                IconButton(onClick = onSettings) {
+                    Icon(Icons.Rounded.Settings, contentDescription = "Settings")
+                }
+            },
+            colors  = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor             = Color.Transparent,
+                scrolledContainerColor     = Color.Transparent,
+                titleContentColor          = MaterialTheme.colorScheme.onSurface,
+                actionIconContentColor     = MaterialTheme.colorScheme.onSurface,
+                navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
             ),
-    )
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }

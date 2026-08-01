@@ -59,7 +59,7 @@ fun GlassBottomNav(
 
     val barColor    = MaterialTheme.colorScheme.surface
     val borderAlpha = if (isDark) 0.15f else 0.10f
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.65f else 0.20f)
+    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.70f else 0.28f)
 
     BoxWithConstraints(
         modifier = modifier
@@ -67,7 +67,7 @@ fun GlassBottomNav(
             .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
             .shadow(
-                elevation    = 12.dp,
+                elevation    = 16.dp,
                 shape        = MaterialTheme.shapes.extraLarge,
                 ambientColor = shadowColor,
                 spotColor    = shadowColor,
