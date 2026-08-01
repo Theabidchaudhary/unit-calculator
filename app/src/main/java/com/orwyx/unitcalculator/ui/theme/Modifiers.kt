@@ -27,12 +27,16 @@ fun Modifier.neumorphic(
     surface: Color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
 ): Modifier {
     val neu = LocalNeuColors.current
+    // Light mode: soft black shadows on white for clean Material depth
+    // Dark mode: dark navy shadows for layered depth
+    val ambientAlpha = if (neu.isDark) 0.70f else 0.07f
+    val spotAlpha    = if (neu.isDark) 0.50f else 0.16f
     return this
         .shadow(
-            elevation = elevation,
-            shape = shape,
-            ambientColor = neu.shadow.copy(alpha = 0.60f),
-            spotColor = neu.shadow.copy(alpha = 0.40f),
+            elevation    = elevation,
+            shape        = shape,
+            ambientColor = neu.shadow.copy(alpha = ambientAlpha),
+            spotColor    = neu.shadow.copy(alpha = spotAlpha),
         )
         .background(color = surface, shape = shape)
 }

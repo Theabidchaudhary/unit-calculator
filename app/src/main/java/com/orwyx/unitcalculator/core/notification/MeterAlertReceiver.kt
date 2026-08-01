@@ -3,10 +3,6 @@ package com.orwyx.unitcalculator.core.notification
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.workDataOf
-import com.orwyx.unitcalculator.core.worker.DailyMeterCheckWorker
 import com.orwyx.unitcalculator.domain.repository.MeterRepository
 import com.orwyx.unitcalculator.domain.repository.SettingsRepository
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,7 +13,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -39,16 +34,8 @@ class MeterAlertReceiver : BroadcastReceiver() {
                     }
                     ACTION_SWITCH_NO -> {
                         notifier.cancelSwitchToday()
-                        // Schedule another reminder in 1 hour
-                        val reminder = OneTimeWorkRequestBuilder<DailyMeterCheckWorker>()
-                            .setInitialDelay(1, TimeUnit.HOURS)
-                            .setInputData(workDataOf(
-                                DailyMeterCheckWorker.KEY_IS_REMINDER to true,
-                                DailyMeterCheckWorker.KEY_METER_ID to meterId,
-                            ))
-                            .addTag(DailyMeterCheckWorker.TAG_SWITCH_REMINDER)
-                            .build()
-                        WorkManager.getInstance(context).enqueue(reminder)
+                        // Schedule an exact alarm 1 hour from NOW so Doze can't defer it
+                        MeterAlarmScheduler.scheduleReminder(context, meterId)
                     }
                     ACTION_RESET_ALL -> {
                         val settings = settingsRepository.getSettingsOnce()

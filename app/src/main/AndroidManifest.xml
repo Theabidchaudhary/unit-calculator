@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <application
         android:name=".UnitCalculatorApp"
@@ -35,6 +37,23 @@
                 <action android:name="com.orwyx.unitcalculator.ACTION_SWITCH_YES" />
                 <action android:name="com.orwyx.unitcalculator.ACTION_SWITCH_NO" />
                 <action android:name="com.orwyx.unitcalculator.ACTION_RESET_ALL" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".core.notification.DailyAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.orwyx.unitcalculator.ACTION_DAILY_CHECK" />
+                <action android:name="com.orwyx.unitcalculator.ACTION_REMINDER" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".core.notification.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
