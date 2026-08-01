@@ -14,3 +14,6 @@ local.properties
 # Keystore files
 *.jks
 *.keystore
+
+# Claude Code session files
+.claude/
