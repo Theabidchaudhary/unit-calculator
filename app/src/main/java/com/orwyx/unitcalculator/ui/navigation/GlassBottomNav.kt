@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
+
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,8 +61,8 @@ fun GlassBottomNav(
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
-            .neumorphic(shape = RoundedCornerShape(28.dp), elevation = 8.dp)
-            .height(72.dp),
+            .height(72.dp)
+            .neumorphic(shape = RoundedCornerShape(28.dp), elevation = 8.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
         val slotWidth = maxWidth / tabs.size
